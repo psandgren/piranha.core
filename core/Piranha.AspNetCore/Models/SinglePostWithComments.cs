@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -18,6 +18,10 @@ using Piranha.Models;
 
 namespace Piranha.AspNetCore.Models
 {
+    /// <summary>
+    /// Razor Page model for a single post with comment helpers.
+    /// </summary>
+    /// <typeparam name="T">The post type</typeparam>
     public class SinglePostWithComments<T> : SinglePost<T> where T : PostBase
     {
         /// <summary>
@@ -41,6 +45,7 @@ namespace Piranha.AspNetCore.Models
         /// Default constructor.
         /// </summary>
         /// <param name="api">The current api</param>
+        /// <param name="loader">The model loader</param>
         public SinglePostWithComments(IApi api, IModelLoader loader) : base(api, loader) { }
 
         /// <summary>
@@ -63,25 +68,22 @@ namespace Piranha.AspNetCore.Models
         /// Gets the model data.
         /// </summary>
         /// <param name="id">The requested model id</param>
-        /// <param name="action">Optional page action</param>
         /// <param name="draft">If the draft should be fetched</param>
-        public virtual async Task<IActionResult> OnPost(Guid id, string action = null, bool draft = false)
+        public virtual async Task<IActionResult> OnPostSaveComment(Guid id, bool draft = false)
         {
-            if (action.ToLower() == "comment")
+            // Create the comment
+            var comment = new Comment
             {
-                // Create the comment
-                var comment = new Comment
-                {
-                    IpAddress = Request.HttpContext.Connection.RemoteIpAddress.ToString(),
-                    UserAgent = Request.Headers.ContainsKey("User-Agent") ? Request.Headers["User-Agent"].ToString() : "",
-                    Author = CommentAuthor,
-                    Email = CommentEmail,
-                    Url = CommentUrl,
-                    Body = CommentBody
-                };
+                IpAddress = Request.HttpContext.Connection.RemoteIpAddress.ToString(),
+                UserAgent = Request.Headers.ContainsKey("User-Agent") ? Request.Headers["User-Agent"].ToString() : "",
+                Author = CommentAuthor,
+                Email = CommentEmail,
+                Url = CommentUrl,
+                Body = CommentBody
+            };
 
-                await _api.Posts.SaveCommentAndVerifyAsync(id, comment);
-            }
+            await _api.Posts.SaveCommentAndVerifyAsync(id, comment);
+
             Data = await _loader.GetPostAsync<T>(id, HttpContext.User, draft);
 
             return Redirect(Data.Permalink + "#comments");

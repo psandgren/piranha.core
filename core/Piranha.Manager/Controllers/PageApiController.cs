@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -74,7 +74,6 @@ namespace Piranha.Manager.Controllers
                 siteId = (await _api.Sites.GetDefaultAsync()).Id;
             }
             return await _service.GetSiteList(siteId.Value);
-            //return await _service.GetPageStructure(siteId.Value);
         }
 
         /// <summary>
@@ -91,8 +90,23 @@ namespace Piranha.Manager.Controllers
         }
 
         /// <summary>
+        /// Gets the info model for the page with the
+        /// given id.
+        /// </summary>
+        /// <param name="id">The unique id</param>
+        /// <returns>The page info model</returns>
+        [Route("info/{id}")]
+        [HttpGet]
+        [Authorize(Policy = Permission.Pages)]
+        public async Task<Piranha.Models.PageInfo> GetInfo(Guid id)
+        {
+            return await _api.Pages.GetByIdAsync<Piranha.Models.PageInfo>(id);
+        }
+
+        /// <summary>
         /// Creates a new page of the specified type.
         /// </summary>
+        /// <param name="siteId">The site id</param>
         /// <param name="typeId">The type id</param>
         /// <returns>The page edit model</returns>
         [Route("create/{siteId}/{typeId}")]
@@ -106,7 +120,9 @@ namespace Piranha.Manager.Controllers
         /// <summary>
         /// Creates a new page of the specified type.
         /// </summary>
+        /// <param name="pageId">The page the new page should be position relative to</param>
         /// <param name="typeId">The type id</param>
+        /// <param name="after">If the new page should be positioned after the existing page</param>
         /// <returns>The page edit model</returns>
         [Route("createrelative/{pageId}/{typeId}/{after}")]
         [HttpGet]
@@ -119,7 +135,9 @@ namespace Piranha.Manager.Controllers
         /// <summary>
         /// Creates a new page of the specified type.
         /// </summary>
-        /// <param name="typeId">The type id</param>
+        /// <param name="sourceId">The page that should be copied</param>
+        /// <param name="pageId">The page the new page should be position relative to</param>
+        /// <param name="after">If the new page should be positioned after the existing page</param>
         /// <returns>The page edit model</returns>
         [Route("copyrelative/{sourceId}/{pageId}/{after}")]
         [HttpGet]
@@ -303,6 +321,7 @@ namespace Piranha.Manager.Controllers
         /// Saves the given model
         /// </summary>
         /// <param name="model">The model</param>
+        /// <param name="draft">If the page should be saved as a draft</param>
         /// <returns>The result of the operation</returns>
         private async Task<PageEditModel> Save(PageEditModel model, bool draft = false)
         {

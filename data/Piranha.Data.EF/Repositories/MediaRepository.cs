@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -20,6 +20,12 @@ namespace Piranha.Repositories
 {
     public class MediaRepository : IMediaRepository
     {
+        class FolderCount
+        {
+            public Guid? FolderId { get; set; }
+            public int Count { get; set; }
+        }
+
         private readonly IDb _db;
 
         /// <summary>
@@ -70,7 +76,11 @@ namespace Piranha.Repositories
                 .ToListAsync()
                 .ConfigureAwait(false);
 
-        /// <inheritdoc cref="IMediaRepository.GetAllByIdAsync"/>
+        /// <summary>
+        /// Get media for all Ids in this enumerable.
+        /// </summary>
+        /// <param name="ids">One or several media id</param>
+        /// <returns>The matching media</returns>
         public Task<IEnumerable<Models.Media>> GetById(params Guid[] ids) => _db.Media.AsNoTracking()
             .Include(c => c.Versions).Where(m => ids.Contains(m.Id)).OrderBy(m => m.Filename).ToArrayAsync()
             .ContinueWith(t => t.Result.Select(m => (Models.Media) m));
@@ -116,14 +126,25 @@ namespace Piranha.Repositories
                 .ToListAsync()
                 .ConfigureAwait(false);
 
-            return Sort(folders);
+            var count = await _db.Media
+                .AsNoTracking()
+                .GroupBy(m => m.FolderId)
+                .Select(m => new FolderCount
+                {
+                    FolderId = m.Key,
+                    Count = m.Count()
+                })
+                .ToListAsync()
+                .ConfigureAwait(false);
+
+            return Sort(folders, count);
         }
 
         /// <summary>
         /// Adds or updates the given model in the database
         /// depending on its state.
         /// </summary>
-        /// <param name="content">The content to save</param>
+        /// <param name="model">The model to save</param>
         public async Task Save(Models.Media model)
         {
             var media = await _db.Media
@@ -148,6 +169,10 @@ namespace Piranha.Repositories
             media.Width = model.Width;
             media.Height = model.Height;
             media.ContentType = model.ContentType;
+            media.Title = model.Title;
+            media.AltText = model.AltText;
+            media.Description = model.Description;
+            media.Properties = Media.SerializeProperties(model.Properties);
             media.LastModified = DateTime.Now;
 
             // Delete removed versions
@@ -212,7 +237,7 @@ namespace Piranha.Repositories
         /// <summary>
         /// Moves the media to the folder with the specified id.
         /// </summary>
-        /// <param name="media">The media</param>
+        /// <param name="model">The model</param>
         /// <param name="folderId">The folder id</param>
         public async Task Move(Models.Media model, Guid? folderId)
         {
@@ -266,19 +291,30 @@ namespace Piranha.Repositories
         /// Sorts the items.
         /// </summary>
         /// <param name="folders">The full folder list</param>
+        /// <param name="count">The list of item count</param>
         /// <param name="parentId">The current parent id</param>
+        /// <param name="level">The current level in the structure</param>
         /// <returns>The structure</returns>
-        private Models.MediaStructure Sort(IEnumerable<MediaFolder> folders, Guid? parentId = null, int level = 0)
+        private Models.MediaStructure Sort(IEnumerable<MediaFolder> folders, IList<FolderCount> count, Guid? parentId = null, int level = 0)
         {
-            var result = new Models.MediaStructure();
+            var rootCount = count.FirstOrDefault(c => c.FolderId == null)?.Count;
+            var totalCount = count.Sum(c => c.Count);
+            var result = new Models.MediaStructure
+            {
+                MediaCount = rootCount.HasValue ? rootCount.Value : 0,
+                TotalCount = totalCount
+            };
 
             var mediaFolders = folders as MediaFolder[] ?? folders.ToArray();
             foreach (var folder in mediaFolders.Where(f => f.ParentId == parentId).OrderBy(f => f.Name))
             {
                 var item = Module.Mapper.Map<MediaFolder, Models.MediaStructureItem>(folder);
+                var folderCount = count.FirstOrDefault(c => c.FolderId == folder.Id)?.Count;
 
                 item.Level = level;
-                item.Items = Sort(mediaFolders, folder.Id, level + 1);
+                item.Items = Sort(mediaFolders, count, folder.Id, level + 1);
+                item.FolderCount = folders.Count(f => f.ParentId == item.Id);
+                item.MediaCount = folderCount.HasValue ? folderCount.Value : 0;
 
                 result.Add(item);
             }

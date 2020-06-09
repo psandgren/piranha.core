@@ -18,6 +18,9 @@
   <data name="An error occured while deleting the page" xml:space="preserve">
     <value>Произошла ошибка при удалении страницы</value>
   </data>
+  <data name="Archive" xml:space="preserve">
+    <value>Archive</value>
+  </data>
   <data name="Detach page" xml:space="preserve">
     <value>Открепить страницу</value>
   </data>
@@ -74,5 +77,8 @@
   </data>
   <data name="Your page title" xml:space="preserve">
     <value>Заголовок вашей страницы</value>
+  </data>
+  <data name="If comments should be enabled for this page" xml:space="preserve">
+    <value>Комментарии включены для этой страницы</value>
   </data>
 </root>

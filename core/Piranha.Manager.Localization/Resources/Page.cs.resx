@@ -18,6 +18,9 @@
   <data name="An error occured while deleting the page" xml:space="preserve">
     <value>Došlo k chybě během odstraňování stránky</value>
   </data>
+  <data name="Archive" xml:space="preserve">
+    <value>Archive</value>
+  </data>
   <data name="Detach page" xml:space="preserve">
     <value>Odpojit stránku</value>
   </data>
@@ -74,5 +77,8 @@
   </data>
   <data name="Your page title" xml:space="preserve">
     <value>Název vaší stránky</value>
+  </data>
+  <data name="If comments should be enabled for this page" xml:space="preserve">
+    <value>Pokud by měly být komentáře povoleny pro tuto stránku</value>
   </data>
 </root>

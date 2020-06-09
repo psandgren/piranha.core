@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -42,8 +42,8 @@ namespace Piranha.Repositories
         /// <summary>
         /// Get media for all Ids in this enumerable.
         /// </summary>
-        /// <param name="ids"></param>
-        /// <returns></returns>
+        /// <param name="ids">One or several media id</param>
+        /// <returns>The matching media</returns>
         Task<IEnumerable<Media>> GetById(params Guid[] ids);
 
         /// <summary>
@@ -52,14 +52,6 @@ namespace Piranha.Repositories
         /// <param name="id">The unique id</param>
         /// <returns>The media</returns>
         Task<Media> GetById(Guid id);
-
-        ///// <summary>
-        ///// Gets the media matching the specified IdQuery.
-        ///// </summary>
-        ///// <param name="idQuery"></param>
-        ///// <returns></returns>
-        //IQueryable<Media> GetById(IQueryable<Guid> idQuery);
-
 
         /// <summary>
         /// Gets the media folder with the given id.

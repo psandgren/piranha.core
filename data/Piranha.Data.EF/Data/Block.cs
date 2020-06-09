@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -13,10 +13,10 @@ using System.Collections.Generic;
 
 namespace Piranha.Data
 {
-    [Serializable]
     /// <summary>
     /// Reusable content block.
     /// </summary>
+    [Serializable]
     public sealed class Block
     {
         /// <summary>
@@ -61,10 +61,5 @@ namespace Piranha.Data
         /// Gets/sets the available fields.
         /// </summary>
         public IList<BlockField> Fields { get; set; } = new List<BlockField>();
-
-        /// <summary>
-        /// Gets/sets the available page connections.
-        /// </summary>
-        //public IList<PageBlock> PageBlocks { get; set; } = new List<PageBlock>();
     }
 }

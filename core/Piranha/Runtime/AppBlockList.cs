@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2018 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -34,6 +34,7 @@ namespace Piranha.Runtime
         /// Gets the blocks for the given category.
         /// </summary>
         /// <param name="category">The category</param>
+        /// <param name="includeGroups">If block groups should be included</param>
         /// <returns>The block types</returns>
         public IEnumerable<AppBlock> GetByCategory(string category, bool includeGroups = true)
         {
@@ -64,6 +65,7 @@ namespace Piranha.Runtime
                 item.Category = attr.Category;
                 item.Icon = attr.Icon;
                 item.IsUnlisted = attr.IsUnlisted;
+                item.IsGeneric = attr.IsGeneric;
                 item.Component = !string.IsNullOrWhiteSpace(attr.Component) ? attr.Component : "missing-block";
 
                 if (attr is BlockGroupTypeAttribute groupAttr)

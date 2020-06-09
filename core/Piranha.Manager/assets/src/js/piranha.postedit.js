@@ -13,11 +13,14 @@ piranha.postedit = new Vue({
         slug: null,
         metaKeywords: null,
         metaDescription: null,
+        excerpt: null,
         published: null,
         redirectUrl: null,
         redirectType: null,
         enableComments: null,
         closeCommentsAfterDays: null,
+        commentCount: null,
+        pendingCommentCount: 0,
         state: "new",
         categories: [],
         tags: [],
@@ -25,6 +28,15 @@ piranha.postedit = new Vue({
         regions: [],
         editors: [],
         useBlocks: true,
+        usePrimaryImage: true,
+        useExcerpt: true,
+        useHtmlExcerpt: true,
+        permissions: [],
+        primaryImage: {
+            id: null,
+            media: null
+        },
+        selectedPermissions: [],
         saving: false,
         savingDraft: false,
         selectedRegion: {
@@ -49,6 +61,16 @@ piranha.postedit = new Vue({
                 return item.meta.display === "setting";
             });
         },
+        primaryImageUrl: function () {
+            if (this.primaryImage.media != null) {
+                return piranha.utils.formatUrl(this.primaryImage.media.publicUrl);
+            } else {
+                return piranha.utils.formatUrl("~/manager/assets/img/empty-image.png");
+            }
+        },
+        isExcerptEmpty: function () {
+            return piranha.utils.isEmptyText(this.excerpt);
+        }
     },
     mounted() {
         document.addEventListener("keydown", this.doHotKeys);
@@ -65,11 +87,14 @@ piranha.postedit = new Vue({
             this.slug = model.slug;
             this.metaKeywords = model.metaKeywords;
             this.metaDescription = model.metaDescription;
+            this.excerpt = model.excerpt;
             this.published = model.published;
             this.redirectUrl = model.redirectUrl;
             this.redirectType = model.redirectType;
             this.enableComments = model.enableComments;
             this.closeCommentsAfterDays = model.closeCommentsAfterDays;
+            this.commentCount = model.commentCount;
+            this.pendingCommentCount = model.pendingCommentCount;
             this.state = model.state;
             this.blocks = model.blocks;
             this.regions = model.regions;
@@ -77,10 +102,16 @@ piranha.postedit = new Vue({
             this.categories = model.categories;
             this.tags = model.tags;
             this.useBlocks = model.useBlocks;
+            this.usePrimaryImage = model.usePrimaryImage;
+            this.useExcerpt = model.useExcerpt;
+            this.useHtmlExcerpt = model.useHtmlExcerpt;
             this.selectedCategory = model.selectedCategory;
             this.selectedTags = model.selectedTags;
             this.selectedRoute = model.selectedRoute;
             this.routes = model.routes;
+            this.permissions = model.permissions;
+            this.primaryImage = model.primaryImage;
+            this.selectedPermissions = model.selectedPermissions;
 
             if (!this.useBlocks) {
                 // First choice, select the first custom editor
@@ -92,6 +123,12 @@ piranha.postedit = new Vue({
                 else if (this.contentRegions.length > 0) {
                     this.selectedRegion = this.contentRegions[0].meta;
                 }
+            } else {
+                this.selectedRegion = {
+                    uid: "uid-blocks",
+                    name: null,
+                    icon: null,
+                };
             }
         },
         load: function (id) {
@@ -147,10 +184,14 @@ piranha.postedit = new Vue({
                 id: self.id,
                 blogId: self.blogId,
                 typeId: self.typeId,
+                primaryImage: {
+                    id: self.primaryImage.id
+                },
                 title: self.title,
                 slug: self.slug,
                 metaKeywords: self.metaKeywords,
                 metaDescription: self.metaDescription,
+                excerpt: self.excerpt,
                 published: self.published,
                 redirectUrl: self.redirectUrl,
                 redirectType: self.redirectType,
@@ -160,7 +201,8 @@ piranha.postedit = new Vue({
                 regions: JSON.parse(JSON.stringify(self.regions)),
                 selectedCategory: self.selectedCategory,
                 selectedTags: JSON.parse(JSON.stringify(self.selectedTags)),
-                selectedRoute: self.selectedRoute
+                selectedRoute: self.selectedRoute,
+                selectedPermissions: self.selectedPermissions
             };
 
             fetch(route, {
@@ -187,6 +229,8 @@ piranha.postedit = new Vue({
 
                 self.saving = false;
                 self.savingDraft = false;
+
+                self.eventBus.$emit("onSaved", self.state)
             })
             .catch(function (error) {
                 console.log("error:", error);
@@ -288,6 +332,28 @@ piranha.postedit = new Vue({
             date = date.addDays(this.closeCommentsAfterDays);
 
             return date.toDateString();
+        },
+        selectPrimaryImage: function () {
+            if (this.primaryImage.media !== null) {
+                piranha.mediapicker.open(this.updatePrimaryImage, "Image", this.primaryImage.media.folderId);
+            } else {
+                piranha.mediapicker.openCurrentFolder(this.updatePrimaryImage, "Image");
+            }
+        },
+        removePrimaryImage: function () {
+            this.primaryImage.id = null;
+            this.primaryImage.media = null;
+        },
+        updatePrimaryImage: function (media) {
+            if (media.type === "Image") {
+                this.primaryImage.id = media.id;
+                this.primaryImage.media = media;
+            } else {
+                console.log("No image was selected");
+            }
+        },
+        onExcerptBlur: function (e) {
+            this.excerpt = e.target.innerHTML;
         }
     },
     created: function () {
@@ -297,7 +363,7 @@ piranha.postedit = new Vue({
 
         if (this.loading)
         {
-            sortable(".blocks", {
+            sortable("#content-blocks", {
                 handle: ".handle",
                 items: ":not(.unsortable)"
             })[0].addEventListener("sortupdate", function (e) {
@@ -324,12 +390,12 @@ piranha.postedit = new Vue({
                     self.selectedTags.push(items[n].text);
                 }
             });
+            piranha.editor.addInline('excerpt-body', 'excerpt-toolbar');
         }
         else {
-            sortable(".blocks", "disable");
-            sortable(".blocks", "enable");
+            sortable("#content-blocks", "disable");
+            sortable("#content-blocks", "enable");
         }
-
         this.loading = false;
     },
     components: {

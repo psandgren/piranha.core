@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -9,6 +9,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
@@ -31,11 +32,13 @@ namespace Piranha.Manager.Controllers
     {
         private readonly MediaService _service;
         private readonly IApi _api;
+        private readonly ManagerLocalizer _localizer;
 
-        public MediaApiController(MediaService service, IApi api)
+        public MediaApiController(MediaService service, IApi api, ManagerLocalizer localizer)
         {
             _service = service;
             _api = api;
+            _localizer = localizer;
         }
 
         /// <summary>
@@ -93,6 +96,32 @@ namespace Piranha.Manager.Controllers
             return await _service.GetList(folderId, filter, width, height);
         }
 
+        /// <summary>
+        /// Saves the meta information for the given media asset.
+        /// </summary>
+        /// <param name="model">The media model</param>
+        [Route("meta/save")]
+        [HttpPost]
+        public async Task<IActionResult> SaveMeta(MediaListModel.MediaItem model)
+        {
+            if (await _service.SaveMeta(model))
+            {
+                return Ok(new StatusMessage
+                {
+                    Type = StatusMessage.Success,
+                    Body = _localizer.Media["The meta information was succesfully updated"]
+                });
+            }
+            else
+            {
+                return Ok(new StatusMessage
+                {
+                    Type = StatusMessage.Error,
+                    Body = _localizer.Media["An error occured when updating the meta information"]
+                });
+            }
+        }
+
         [Route("folder/save")]
         [HttpPost]
         [Authorize(Policy = Permission.MediaAddFolder)]
@@ -107,7 +136,7 @@ namespace Piranha.Manager.Controllers
                 result.Status = new StatusMessage
                 {
                     Type = StatusMessage.Success,
-                    Body = $"The folder <code>{ model.Name }</code> was saved"
+                    Body = String.Format(_localizer.Media["The folder <code>{0}</code> was saved"], model.Name)
                 };
 
                 return Ok(result);
@@ -138,7 +167,7 @@ namespace Piranha.Manager.Controllers
                 result.Status = new StatusMessage
                 {
                     Type = StatusMessage.Success,
-                    Body = $"The folder was successfully deleted"
+                    Body = _localizer.Media["The folder was successfully deleted"]
                 };
 
                 return Ok(result);
@@ -180,7 +209,7 @@ namespace Piranha.Manager.Controllers
                     return Ok(new StatusMessage
                     {
                         Type = StatusMessage.Success,
-                        Body = $"Uploaded all media assets"
+                        Body = _localizer.Media["Uploaded all media assets"]
                     });
                 }
                 else if (uploaded == 0)
@@ -188,7 +217,7 @@ namespace Piranha.Manager.Controllers
                     return Ok(new StatusMessage
                     {
                         Type = StatusMessage.Error,
-                        Body = $"Could not upload the media assets."
+                        Body = _localizer.Media["Could not upload the media assets"]
                     });
                 }
                 else
@@ -196,7 +225,7 @@ namespace Piranha.Manager.Controllers
                     return Ok(new StatusMessage
                     {
                         Type = StatusMessage.Information,
-                        Body = $"Uploaded {uploaded} of {model.Uploads.Count()} media assets."
+                        Body = String.Format(_localizer.Media["Uploaded {0} of {1} media assets"], uploaded, model.Uploads.Count())
                     });
                 }
             }
@@ -210,46 +239,51 @@ namespace Piranha.Manager.Controllers
             }
         }
 
-        [Route("move/{mediaId}/{folderId?}")]
-        [HttpGet]
+        [Route("move/{folderId?}")]
+        [HttpPost]
+        [Consumes("application/json")]
         [Authorize(Policy = Permission.MediaEdit)]
-        public async Task<IActionResult> Move(Guid mediaId, Guid? folderId)
-        {
+        public async Task<IActionResult> Move([FromBody] IEnumerable<Guid> items, Guid? folderId)
+        {            
             try
             {
-                if (mediaId != folderId)
+                var moved = 0;
+                foreach (var id in items)
                 {
-                    var media = await _api.Media.GetByIdAsync(mediaId);
+                    var media = await _api.Media.GetByIdAsync(id);
                     if (media != null)
                     {
                         await _api.Media.MoveAsync(media, folderId);
+                        moved++;
 
-                        return Ok(new StatusMessage
-                        {
-                            Type = StatusMessage.Success,
-                            Body = $"{media.Filename} was successfully moved."
-                        });
+                        continue;
                     }
 
-                    var folder = await _api.Media.GetFolderByIdAsync(mediaId);
+                    var folder = await _api.Media.GetFolderByIdAsync(id);
                     if (folder != null)
                     {
                         folder.ParentId = folderId;
                         await _api.Media.SaveFolderAsync(folder);
-
-                        return Ok(new StatusMessage
-                        {
-                            Type = StatusMessage.Success,
-                            Body = $"{folder.Name} was successfully moved."
-                        });
+                        moved++;
                     }
+                }
+
+                if (moved > 0)
+                {
+                    return Ok(new StatusMessage
+                    {
+                        Type = StatusMessage.Success,
+                        Body = _localizer.Media[$"Media file{(moved > 1 ? "s" : "")} was successfully moved."]
+                    });
+                }
+                else
+                {
                     return BadRequest(new StatusMessage
                     {
                         Type = StatusMessage.Error,
-                        Body = "Media was not found."
+                        Body = _localizer.Media["The media file was not found."]
                     });
                 }
-                return BadRequest();
             }
             catch (Exception e)
             {
@@ -261,33 +295,32 @@ namespace Piranha.Manager.Controllers
             }
         }
 
-        [Route("delete/{id:Guid}")]
-        [HttpGet]
+        [Route("delete")]
+        [HttpPost]
+        [Consumes("application/json")]
         [Authorize(Policy = Permission.MediaDelete)]
-        public async Task<IActionResult> Delete(Guid id)
+        public async Task<IActionResult> Delete([FromBody] IEnumerable<Guid> items)
         {
             try
             {
-                var folderId = await _service.DeleteMedia(id);
-                var result = await _service.GetList(folderId);
+                foreach(var id in items)
+                {
+                    await _service.DeleteMedia(id);
+                }
 
-                result.Status = new StatusMessage
+                return Ok(new StatusMessage
                 {
                     Type = StatusMessage.Success,
-                    Body = $"The media file was successfully deleted"
-                };
-
-                return Ok(result);
+                    Body = _localizer.Media[$"The media file{(items.Count() > 1 ? "s" : "")} was successfully deleted"]
+                });
             }
             catch (ValidationException e)
             {
-                var result = new MediaListModel();
-                result.Status = new StatusMessage
+                return BadRequest(new StatusMessage
                 {
                     Type = StatusMessage.Error,
                     Body = e.Message
-                };
-                return BadRequest(result);
+                });
             }
         }
     }

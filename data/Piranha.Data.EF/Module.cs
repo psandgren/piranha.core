@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -8,10 +8,9 @@
  *
  */
 
-using System.Collections.Generic;
+using System;
 using AutoMapper;
 using Piranha.Extend;
-using Piranha.Security;
 
 namespace Piranha.Data.EF
 {
@@ -72,19 +71,25 @@ namespace Piranha.Data.EF
                     .ForMember(f => f.Media, o => o.Ignore());
                 cfg.CreateMap<Data.MediaFolder, Models.MediaStructureItem>()
                     .ForMember(f => f.Level, o => o.Ignore())
+                    .ForMember(f => f.FolderCount, o => o.Ignore())
+                    .ForMember(f => f.MediaCount, o => o.Ignore())
                     .ForMember(f => f.Items, o => o.Ignore());
                 cfg.CreateMap<Data.Page, Models.PageBase>()
                     .ForMember(p => p.TypeId, o => o.MapFrom(m => m.PageTypeId))
+                    .ForMember(p => p.PrimaryImage, o => o.MapFrom(m => m.PrimaryImageId))
                     .ForMember(p => p.Permalink, o => o.MapFrom(m => "/" + m.Slug))
+                    .ForMember(p => p.Permissions, o => o.Ignore())
                     .ForMember(p => p.Blocks, o => o.Ignore())
                     .ForMember(p => p.CommentCount, o => o.Ignore());
                 cfg.CreateMap<Models.PageBase, Data.Page>()
                     .ForMember(p => p.ContentType, o => o.Ignore())
+                    .ForMember(p => p.PrimaryImageId, o => o.MapFrom(m => m.PrimaryImage != null ? m.PrimaryImage.Id : (Guid?)null ))
                     .ForMember(p => p.PageTypeId, o => o.MapFrom(m => m.TypeId))
                     .ForMember(p => p.Blocks, o => o.Ignore())
                     .ForMember(p => p.Fields, o => o.Ignore())
                     .ForMember(p => p.Created, o => o.Ignore())
                     .ForMember(p => p.LastModified, o => o.Ignore())
+                    .ForMember(p => p.Permissions, o => o.Ignore())
                     .ForMember(p => p.PageType, o => o.Ignore())
                     .ForMember(p => p.Site, o => o.Ignore())
                     .ForMember(p => p.Parent, o => o.Ignore());
@@ -99,7 +104,9 @@ namespace Piranha.Data.EF
                     .ForMember(p => p.Created, o => o.Ignore());
                 cfg.CreateMap<Data.Post, Models.PostBase>()
                     .ForMember(p => p.TypeId, o => o.MapFrom(m => m.PostTypeId))
+                    .ForMember(p => p.PrimaryImage, o => o.MapFrom(m => m.PrimaryImageId))
                     .ForMember(p => p.Permalink, o => o.Ignore())
+                    .ForMember(p => p.Permissions, o => o.Ignore())
                     .ForMember(p => p.Blocks, o => o.Ignore())
                     .ForMember(p => p.CommentCount, o => o.Ignore());
                 cfg.CreateMap<Data.PostTag, Models.Taxonomy>()
@@ -109,10 +116,12 @@ namespace Piranha.Data.EF
                 cfg.CreateMap<Models.PostBase, Data.Post>()
                     .ForMember(p => p.PostTypeId, o => o.MapFrom(m => m.TypeId))
                     .ForMember(p => p.CategoryId, o => o.MapFrom(m => m.Category.Id))
+                    .ForMember(p => p.PrimaryImageId, o => o.MapFrom(m => m.PrimaryImage != null ? m.PrimaryImage.Id : (Guid?)null ))
                     .ForMember(p => p.Blocks, o => o.Ignore())
                     .ForMember(p => p.Fields, o => o.Ignore())
                     .ForMember(p => p.Created, o => o.Ignore())
                     .ForMember(p => p.LastModified, o => o.Ignore())
+                    .ForMember(p => p.Permissions, o => o.Ignore())
                     .ForMember(p => p.PostType, o => o.Ignore())
                     .ForMember(p => p.Blog, o => o.Ignore())
                     .ForMember(p => p.Category, o => o.Ignore())
@@ -121,7 +130,8 @@ namespace Piranha.Data.EF
                     .ForMember(s => s.Id, o => o.Ignore())
                     .ForMember(s => s.Created, o => o.Ignore());
                 cfg.CreateMap<Data.Site, Models.SiteContentBase>()
-                    .ForMember(s => s.TypeId, o => o.MapFrom(m => m.SiteTypeId));
+                    .ForMember(s => s.TypeId, o => o.MapFrom(m => m.SiteTypeId))
+                    .ForMember(s => s.Permissions, o => o.Ignore());
                 cfg.CreateMap<Models.SiteContentBase, Data.Site>()
                     .ForMember(s => s.SiteTypeId, o => o.Ignore())
                     .ForMember(s => s.InternalId, o => o.Ignore())

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -10,6 +10,7 @@
 
 using System;
 using System.Security.Claims;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Piranha.Models;
@@ -26,6 +27,8 @@ namespace Piranha.AspNetCore.Services
         /// Default constructor.
         /// </summary>
         /// <param name="api">The current api</param>
+        /// <param name="auth">The authorization service</param>
+        /// <param name="app">The application service</param>
         public ModelLoader(IApi api, IAuthorizationService auth, IApplicationService app)
         {
             _api = api;
@@ -44,12 +47,12 @@ namespace Piranha.AspNetCore.Services
         public async Task<T> GetPageAsync<T>(Guid id, ClaimsPrincipal user, bool draft = false)
             where T : PageBase
         {
+            T model = null;
+
             if (!draft && _app.CurrentPage != null && _app.CurrentPage.Id == id && _app.CurrentPage is T)
             {
-                return (T)_app.CurrentPage;
+                model = (T)_app.CurrentPage;
             }
-
-            T model = null;
 
             // Check if we're requesting a draft
             if (draft)
@@ -87,6 +90,29 @@ namespace Piranha.AspNetCore.Services
                     return null;
                 }
             }
+
+            // Check permissions
+            if (model.Permissions.Count > 0)
+            {
+                var currentPermissions = App.Permissions.GetPublicPermissions()
+                    .Select(p => p.Name);
+
+                foreach (var permission in model.Permissions)
+                {
+                    // Make sure the permissions is still available as a
+                    // registered public permission.
+                    if (!currentPermissions.Contains(permission))
+                    {
+                        continue;
+                    }
+
+                    // Authorize
+                    if (!(await _auth.AuthorizeAsync(user, permission)).Succeeded)
+                    {
+                        throw new UnauthorizedAccessException();
+                    }
+                }
+            }
             return model;
         }
 
@@ -99,11 +125,11 @@ namespace Piranha.AspNetCore.Services
         /// <typeparam name="T">The model type</typeparam>
         /// <returns>The page model</returns>
         [Obsolete("GetPage<T> has been renamed to GetPageAsync<T>")]
+        [NoCoverage]
         public Task<T> GetPage<T>(Guid id, ClaimsPrincipal user, bool draft = false) where T : PageBase
         {
             return GetPageAsync<T>(id, user, draft);
         }
-
 
         /// <summary>
         /// Gets the specified post model for the given user.
@@ -116,13 +142,12 @@ namespace Piranha.AspNetCore.Services
         public async Task<T> GetPostAsync<T>(Guid id, ClaimsPrincipal user, bool draft = false)
             where T : PostBase
         {
+            T model = null;
+
             if (!draft && _app.CurrentPost != null && _app.CurrentPost.Id == id && _app.CurrentPost is T)
             {
-                return (T)_app.CurrentPost;
+                model = (T)_app.CurrentPost;
             }
-
-
-            T model = null;
 
             // Check if we're requesting a draft
             if (draft)
@@ -160,6 +185,18 @@ namespace Piranha.AspNetCore.Services
                     return null;
                 }
             }
+
+            // Check permissions
+            if (model.Permissions.Count > 0)
+            {
+                foreach (var permission in model.Permissions)
+                {
+                    if (!(await _auth.AuthorizeAsync(user, permission)).Succeeded)
+                    {
+                        throw new UnauthorizedAccessException();
+                    }
+                }
+            }
             return model;
         }
 
@@ -172,6 +209,7 @@ namespace Piranha.AspNetCore.Services
         /// <typeparam name="T">The model type</typeparam>
         /// <returns>The post model</returns>
         [Obsolete("GetPost<T> has been renamed to GetPostAsync<T>")]
+        [NoCoverage]
         public Task<T> GetPost<T>(Guid id, ClaimsPrincipal user, bool draft = false) where T : PostBase
         {
             return GetPostAsync<T>(id, user, draft);

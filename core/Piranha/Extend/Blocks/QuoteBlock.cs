@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -8,7 +8,6 @@
  *
  */
 
-using System;
 using Piranha.Extend.Fields;
 
 namespace Piranha.Extend.Blocks
@@ -17,20 +16,37 @@ namespace Piranha.Extend.Blocks
     /// Single column quote block.
     /// </summary>
     [BlockType(Name = "Quote", Category = "Content", Icon = "fas fa-quote-right", Component = "quote-block")]
-    public class QuoteBlock : Block
+    public class QuoteBlock : Block, ISearchable
     {
+        /// <summary>
+        /// Gets/sets the author
+        /// </summary>
+        public StringField Author { get; set; }
+
         /// <summary>
         /// Gets/sets the text body.
         /// </summary>
         public TextField Body { get; set; }
 
+        /// <summary>
+        /// Gets the title of the block when used in a block group.
+        /// </summary>
+        /// <returns>The title</returns>
         public override string GetTitle()
         {
-            if (Body.Value != null)
+            if (Body?.Value != null)
             {
                 return Body.Value;
             }
             return "Empty";
+        }
+
+        /// <summary>
+        /// Gets the content that should be indexed for searching.
+        /// </summary>
+        public string GetIndexedContent()
+        {
+            return !string.IsNullOrEmpty(Body.Value) ? Body.Value : "";
         }
     }
 }

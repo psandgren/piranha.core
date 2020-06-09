@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -22,16 +22,16 @@ namespace RazorWeb.Models
     [PageTypeRoute(Title = "Default", Route = "/teaserpage")]
     public class TeaserPage : Page<TeaserPage>
     {
-        [Region(Title = "All fields")]
-        [RegionDescription("Vestibulum id ligula porta felis euismod <strong>semper</strong>. Curabitur blandit tempus porttitor.")]
-        public Regions.AllFields AllFields { get; set; }
-
         /// <summary>
         /// Gets/sets the page header.
         /// </summary>
-        [Region(Display = RegionDisplayMode.Setting)]
+        [Region]
         [RegionDescription("The Hero is shown on the top of your page")]
         public Regions.Hero Hero { get; set; }
+
+        [Region(Title = "All fields")]
+        [RegionDescription("Vestibulum id ligula porta felis euismod <strong>semper</strong>. Curabitur blandit tempus porttitor.")]
+        public Regions.AllFields AllFields { get; set; }
 
         /// <summary>
         /// Gets/sets the available teasers.

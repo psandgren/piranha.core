@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -25,6 +25,17 @@ namespace Piranha.AspNetCore.Services
         /// Gets/sets the optional culture of the requested site.
         /// </summary>
         string Culture { get; set; }
+
+        /// <summary>
+        /// Gets/set the optional hostname of the requested site.
+        /// </summary>
+        string Host { get; set; }
+
+        /// <summary>
+        /// Gets/sets the optional site prefic of the requested site
+        /// if it's routed with `host/prefix`.
+        /// </summary>
+        string SitePrefix { get; set; }
 
         /// <summary>
         /// Gets/sets the sitemap of the currently requested site.

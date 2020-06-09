@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2016-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -49,6 +49,16 @@ namespace Piranha.Repositories
         /// <param name="pageSize">The page size</param>
         /// <returns>The available comments</returns>
         Task<IEnumerable<Comment>> GetAllComments(Guid? pageId, bool onlyApproved,
+            int page, int pageSize);
+
+        /// <summary>
+        /// Gets the pending comments available for the page with the specified id.
+        /// </summary>
+        /// <param name="pageId">The unique page id</param>
+        /// <param name="page">The page number</param>
+        /// <param name="pageSize">The page size</param>
+        /// <returns>The available comments</returns>
+        Task<IEnumerable<Comment>> GetAllPendingComments(Guid? pageId,
             int page, int pageSize);
 
         /// <summary>

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2016-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -11,6 +11,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Piranha.Extend.Fields;
 
 namespace Piranha.Models
 {
@@ -18,7 +19,7 @@ namespace Piranha.Models
     /// Base class for page models.
     /// </summary>
     [Serializable]
-    public abstract class PageBase : RoutedContent, IBlockModel, IMeta, ICommentModel
+    public abstract class PageBase : RoutedContentBase, IBlockContent, IMeta, ICommentModel
     {
         /// <summary>
         /// Gets/sets the site id.
@@ -34,6 +35,16 @@ namespace Piranha.Models
         /// Gets/sets the sort order of the page in its hierarchical position.
         /// </summary>
         public int SortOrder { get; set; }
+
+        /// <summary>
+        /// Gets/sets the optional primary image.
+        /// </summary>
+        public ImageField PrimaryImage { get; set; } = new ImageField();
+
+        /// <summary>
+        /// Gets/sets the optional excerpt.
+        /// </summary>
+        public string Excerpt { get; set; }
 
         /// <summary>
         /// Gets/sets the navigation title.
@@ -88,6 +99,6 @@ namespace Piranha.Models
         /// <summary>
         /// Checks if comments are open for this page.
         /// </summary>
-        public bool isCommentsOpen => EnableComments && Published.HasValue && (CloseCommentsAfterDays == 0 || Published.Value.AddDays(CloseCommentsAfterDays) > DateTime.Now);
+        public bool IsCommentsOpen => EnableComments && Published.HasValue && (CloseCommentsAfterDays == 0 || Published.Value.AddDays(CloseCommentsAfterDays) > DateTime.Now);
     }
 }

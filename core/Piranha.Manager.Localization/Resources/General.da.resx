@@ -49,7 +49,7 @@
     <value>Detaljer</value>
   </data>
   <data name="Dimensions" xml:space="preserve">
-    <value>Dimensions</value>
+    <value>Dimensioner</value>
   </data>
   <data name="Download" xml:space="preserve">
     <value>Download</value>
@@ -91,7 +91,7 @@
     <value>Internt ID</value>
   </data>
   <data name="Is default" xml:space="preserve">
-    <value>Is default</value>
+    <value>Er standard</value>
   </data>
   <data name="Login" xml:space="preserve">
     <value>Log på</value>
@@ -100,28 +100,28 @@
     <value>Log af</value>
   </data>
   <data name="Looks like there's no items here. Click on the button above to get started!" xml:space="preserve">
-    <value>Looks like there's no items here. Click on the button above to get started!</value>
+    <value>Her ser tomt ud. Tryk på knappen ovenfor for at komme i gang!</value>
   </data>
   <data name="Looks like there's no items here. Click on the button below to get started!" xml:space="preserve">
-    <value>Looks like there's no items here. Click on the button below to get started!</value>
+    <value>Her ser tomt ud. Tryk på knappen herunder for at komme i gang!</value>
   </data>
   <data name="Looks like there's no items here. Click on the button to the left to get started!" xml:space="preserve">
-    <value>Looks like there's no items here. Click on the button to the left to get started!</value>
+    <value>Her ser tomt ud. Tryk på knappen til venstre for at komme i gang!</value>
   </data>
   <data name="Main content" xml:space="preserve">
-    <value>Main content</value>
+    <value>Primært sideindhold</value>
   </data>
   <data name="Modified" xml:space="preserve">
-    <value>Modified</value>
+    <value>Ændret</value>
   </data>
   <data name="Name" xml:space="preserve">
     <value>Navn</value>
   </data>
   <data name="Name is mandatory." xml:space="preserve">
-    <value>Name is mandatory.</value>
+    <value>Navn er obligatorisk.</value>
   </data>
   <data name="Open public URL in new tab" xml:space="preserve">
-    <value>Open public URL in new tab</value>
+    <value>Åbn offentlig URL i et nyt faneblad</value>
   </data>
   <data name="Password" xml:space="preserve">
     <value>Adgangskode</value>
@@ -145,10 +145,10 @@
     <value>Udgivelsesdato</value>
   </data>
   <data name="Redirect" xml:space="preserve">
-    <value>Redirect</value>
+    <value>Omdiriger</value>
   </data>
   <data name="Redirect Type" xml:space="preserve">
-    <value>Redirect Type</value>
+    <value>Type af omdirigering</value>
   </data>
   <data name="Revert" xml:space="preserve">
     <value>Gendan</value>
@@ -157,61 +157,61 @@
     <value>Roller</value>
   </data>
   <data name="Route" xml:space="preserve">
-    <value>Route</value>
+    <value>Sti</value>
   </data>
   <data name="Save" xml:space="preserve">
     <value>Gem</value>
   </data>
   <data name="Scheduled" xml:space="preserve">
-    <value>Scheduled</value>
+    <value>Planlagt</value>
   </data>
   <data name="Search..." xml:space="preserve">
     <value>Søg...</value>
   </data>
   <data name="Select block" xml:space="preserve">
-    <value>Select block</value>
+    <value>Vælg blok</value>
   </data>
   <data name="Settings" xml:space="preserve">
     <value>Indstillinger</value>
   </data>
   <data name="Size" xml:space="preserve">
-    <value>Size</value>
+    <value>Størrelse</value>
   </data>
   <data name="Slug" xml:space="preserve">
-    <value>Slug</value>
+    <value>URL-segment</value>
   </data>
   <data name="System" xml:space="preserve">
     <value>System</value>
   </data>
   <data name="Temporary" xml:space="preserve">
-    <value>Temporary</value>
+    <value>Midlertidig</value>
   </data>
   <data name="Title" xml:space="preserve">
     <value>Titel</value>
   </data>
   <data name="Update" xml:space="preserve">
-    <value>Update</value>
+    <value>Opdatér</value>
   </data>
   <data name="Update password" xml:space="preserve">
-    <value>Update password</value>
+    <value>Opdatér adgangskode</value>
   </data>
   <data name="Username" xml:space="preserve">
-    <value>Username</value>
+    <value>Brugernavn</value>
   </data>
   <data name="Username is mandatory." xml:space="preserve">
-    <value>Username is mandatory.</value>
+    <value>Brugernavn er obligatorisk.</value>
   </data>
   <data name="Title is mandatory." xml:space="preserve">
-    <value>Title is mandatory.</value>
+    <value>Titel er obligatorisk.</value>
   </data>
   <data name="Type" xml:space="preserve">
     <value>Type</value>
   </data>
   <data name="Unpublish" xml:space="preserve">
-    <value>Unpublish</value>
+    <value>Afpublicer</value>
   </data>
   <data name="Unpublished" xml:space="preserve">
-    <value>Unpublished</value>
+    <value>Ikke Udgivet</value>
   </data>
   <data name="Users" xml:space="preserve">
     <value>Brugere</value>
@@ -220,6 +220,21 @@
     <value>Version</value>
   </data>
   <data name="Width" xml:space="preserve">
-    <value>Width</value>
+    <value>Bredde</value>
+  </data>
+  <data name="Archives and Comments" xml:space="preserve">
+    <value>Arkiver og Kommentarer</value>
+  </data>
+  <data name="Author" xml:space="preserve">
+    <value>Forfatter</value>
+  </data>
+  <data name="Comments" xml:space="preserve">
+    <value>Kommentarer</value>
+  </data>
+  <data name="Created" xml:space="preserve">
+    <value>Oprettet</value>
+  </data>
+  <data name="Username and/or password are incorrect." xml:space="preserve">
+    <value>Der findes ingen bruger med det indtastede brugernavn og password.</value>
   </data>
 </root>

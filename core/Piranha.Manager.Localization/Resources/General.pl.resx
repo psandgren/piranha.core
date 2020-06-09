@@ -19,7 +19,7 @@
     <value>Wszystkie</value>
   </data>
   <data name="An error occurred" xml:space="preserve">
-    <value>An error occurred</value>
+    <value>Wystąpił błąd</value>
   </data>
   <data name="Cancel" xml:space="preserve">
     <value>Anuluj</value>
@@ -221,5 +221,20 @@
   </data>
   <data name="Width" xml:space="preserve">
     <value>Szerokość</value>
+  </data>
+  <data name="Archives and Comments" xml:space="preserve">
+    <value>Archiwa i komentarze</value>
+  </data>
+  <data name="Author" xml:space="preserve">
+    <value>Autor</value>
+  </data>
+  <data name="Comments" xml:space="preserve">
+    <value>Komentarze</value>
+  </data>
+  <data name="Created" xml:space="preserve">
+    <value>Utworzono</value>
+  </data>
+  <data name="Username and/or password are incorrect." xml:space="preserve">
+    <value>Nazwa użytkownika i/lub hasło są nieprawidłowe.</value>
   </data>
 </root>

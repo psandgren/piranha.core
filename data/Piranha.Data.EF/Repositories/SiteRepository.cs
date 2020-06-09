@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2017-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -169,13 +169,17 @@ namespace Piranha.Repositories
             }
 
             if (string.IsNullOrEmpty(site.SiteTypeId))
+            {
                 return null;
+            }
 
             var type = App.SiteTypes.GetById(site.SiteTypeId);
             if (type == null)
+            {
                 return null;
+            }
 
-            return _contentService.Transform<T>(site, type);
+            return await _contentService.TransformAsync<T>(site, type);
         }
 
         /// <summary>
@@ -307,6 +311,7 @@ namespace Piranha.Repositories
         /// </summary>
         /// <param name="pages">The full page list</param>
         /// <param name="parentId">The current parent id</param>
+        /// <param name="level">The level in structure</param>
         /// <returns>The sitemap</returns>
         private Models.Sitemap Sort(IEnumerable<Page> pages, Guid? parentId = null, int level = 0)
         {

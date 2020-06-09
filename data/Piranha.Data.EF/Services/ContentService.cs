@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -13,6 +13,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
+using System.Threading.Tasks;
 using AutoMapper;
 using Piranha.Data;
 using Piranha.Models;
@@ -20,9 +21,9 @@ using Piranha.Models;
 namespace Piranha.Services
 {
     public class ContentService<TContent, TField, TModelBase> : IContentService<TContent, TField, TModelBase>
-        where TContent : Content<TField>
-        where TField : ContentField
-        where TModelBase : Content
+        where TContent : ContentBase<TField>
+        where TField : ContentFieldBase
+        where TModelBase : ContentBase
     {
         //
         // Members
@@ -32,6 +33,7 @@ namespace Piranha.Services
         /// <summary>
         /// Default constructor.
         /// </summary>
+        /// <param name="factory">The content factory</param>
         /// <param name="mapper">The AutoMapper instance to use</param>
         public ContentService(IContentFactory factory, IMapper mapper)
         {
@@ -45,32 +47,33 @@ namespace Piranha.Services
         /// <typeparam name="T">The model type</typeparam>
         /// <param name="content">The content entity</param>
         /// <param name="type">The content type</param>
+        /// <param name="process">Optional func that should be called after transformation</param>
         /// <returns>The page model</returns>
-        public T Transform<T>(TContent content, Models.ContentType type, Action<TContent, T> process = null)
-            where T : Models.Content, TModelBase
+        public async Task<T> TransformAsync<T>(TContent content, Models.ContentTypeBase type, Func<TContent, T, Task> process = null)
+            where T : Models.ContentBase, TModelBase
         {
             if (type != null)
             {
                 var modelType = typeof(T);
 
-                if (!typeof(Models.IDynamicModel).IsAssignableFrom(modelType) && !typeof(Models.IContentInfo).IsAssignableFrom(modelType))
+                if (!typeof(Models.IDynamicContent).IsAssignableFrom(modelType) && !typeof(Models.IContentInfo).IsAssignableFrom(modelType))
                 {
                     modelType = Type.GetType(type.CLRType);
 
                     if (modelType != typeof(T) && !typeof(T).IsAssignableFrom(modelType))
+                    {
                         return null;
+                    }
                 }
 
                 // Create an initialized model
-                var model = _factory.Create<T>(type);
+                var model = await _factory.CreateAsync<T>(type);
 
                 // Map basic fields
                 _mapper.Map<TContent, TModelBase>(content, model);
 
-                if (model is Models.RoutedContent)
+                if (model is Models.RoutedContentBase routeModel)
                 {
-                    var routeModel = (Models.RoutedContent)(object)model;
-
                     // Map route (if available)
                     if (string.IsNullOrWhiteSpace(routeModel.Route) && type.Routes.Count > 0)
                         routeModel.Route = type.Routes.First();
@@ -121,14 +124,18 @@ namespace Piranha.Services
                                 }
                                 else
                                 {
-                                    AddComplexValue(model, type, regionKey, fields.Where(f => f.SortOrder == sortOrder).ToList());
+                                    await AddComplexValueAsync(model, type, regionKey, fields.Where(f => f.SortOrder == sortOrder).ToList())
+                                        .ConfigureAwait(false);
                                 }
                                 sortOrder++;
                             }
                         }
                     }
                 }
-                process?.Invoke(content, model);
+                if (process != null)
+                {
+                    await process(content, model);
+                }
 
                 return model;
             }
@@ -142,8 +149,8 @@ namespace Piranha.Services
         /// <param name="type">The conten type</param>
         /// <param name="dest">The optional dest object</param>
         /// <returns>The content data</returns>
-        public TContent Transform<T>(T model, Models.ContentType type, TContent dest = null)
-            where T : Models.Content, TModelBase
+        public TContent Transform<T>(T model, Models.ContentTypeBase type, TContent dest = null)
+            where T : Models.ContentBase, TModelBase
         {
             var content = dest == null ? Activator.CreateInstance<TContent>() : dest;
 
@@ -173,7 +180,7 @@ namespace Piranha.Services
 
                     if (!regionType.Collection)
                     {
-                        MapRegion(model, content, GetRegion(model, regionKey), regionType, regionKey);
+                        MapRegion(content, GetRegion(model, regionKey), regionType, regionKey);
                     }
                     else
                     {
@@ -181,7 +188,7 @@ namespace Piranha.Services
                         var sortOrder = 0;
                         foreach (var region in GetEnumerable(model, regionKey))
                         {
-                            var fields = MapRegion(model, content, region, regionType, regionKey, sortOrder++);
+                            var fields = MapRegion(content, region, regionType, regionKey, sortOrder++);
 
                             if (fields.Count > 0)
                                 items.AddRange(fields);
@@ -333,13 +340,13 @@ namespace Piranha.Services
         /// <param name="model">The model</param>
         /// <param name="regionId">The region id</param>
         /// <returns>The enumerator</returns>
-        private IEnumerable GetEnumerable<T>(T model, string regionId) where T : Models.Content
+        private IEnumerable GetEnumerable<T>(T model, string regionId) where T : Models.ContentBase
         {
             object value = null;
 
-            if (model is Models.IDynamicModel)
+            if (model is Models.IDynamicContent dynamicModel)
             {
-                value = ((IDictionary<string, object>)((Models.IDynamicModel)(object)model).Regions)[regionId];
+                value = ((IDictionary<string, object>)dynamicModel.Regions)[regionId];
             }
             else
             {
@@ -357,11 +364,11 @@ namespace Piranha.Services
         /// <param name="model">The model</param>
         /// <param name="regionId">The region id</param>
         /// <returns>The region</returns>
-        private object GetRegion<T>(T model, string regionId) where T : Models.Content
+        private object GetRegion<T>(T model, string regionId) where T : Models.ContentBase
         {
-            if (model is Models.IDynamicModel)
+            if (model is Models.IDynamicContent dynamicModel)
             {
-                return ((IDictionary<string, object>)((Models.IDynamicModel)(object)model).Regions)[regionId];
+                return ((IDictionary<string, object>)dynamicModel.Regions)[regionId];
             }
             else
             {
@@ -376,11 +383,11 @@ namespace Piranha.Services
         /// <param name="model">The model</param>
         /// <param name="regionId">The region id</param>
         /// <returns>If the region exists</returns>
-        private bool HasRegion<T>(T model, string regionId) where T : Models.Content
+        private bool HasRegion<T>(T model, string regionId) where T : Models.ContentBase
         {
-            if (model is Models.IDynamicModel)
+            if (model is Models.IDynamicContent dynamicModel)
             {
-                return ((IDictionary<string, object>)((Models.IDynamicModel)(object)model).Regions).ContainsKey(regionId);
+                return ((IDictionary<string, object>)dynamicModel.Regions).ContainsKey(regionId);
             }
             else
             {
@@ -391,14 +398,12 @@ namespace Piranha.Services
         /// <summary>
         /// Maps a region to the given data entity.
         /// </summary>
-        /// <typeparam name="T">The model type</typeparam>
-        /// <param name="model">The model</param>
         /// <param name="content">The content entity</param>
         /// <param name="region">The region to map</param>
         /// <param name="regionType">The region type</param>
         /// <param name="regionId">The region id</param>
         /// <param name="sortOrder">The optional sort order</param>
-        private IList<Guid> MapRegion<T>(T model, TContent content, object region, Models.RegionType regionType, string regionId, int sortOrder = 0) where T : Models.Content
+        private IList<Guid> MapRegion(TContent content, object region, Models.RegionType regionType, string regionId, int sortOrder = 0)
         {
             var items = new List<Guid>();
 
@@ -466,11 +471,11 @@ namespace Piranha.Services
         /// <param name="model">The model</param>
         /// <param name="regionId">The region id</param>
         /// <param name="field">The field</param>
-        private void SetSimpleValue<T>(T model, string regionId, TField field) where T : Models.Content
+        private void SetSimpleValue<T>(T model, string regionId, TField field) where T : Models.ContentBase
         {
-            if (model is Models.IDynamicModel)
+            if (model is Models.IDynamicContent dynamicModel)
             {
-                ((IDictionary<string, object>)((Models.IDynamicModel)(object)model).Regions)[regionId] =
+                ((IDictionary<string, object>)dynamicModel.Regions)[regionId] =
                     DeserializeValue(field);
             }
             else
@@ -491,11 +496,11 @@ namespace Piranha.Services
         /// <param name="model">The model</param>
         /// <param name="regionId">The region id</param>
         /// <param name="field">The field</param>
-        private void AddSimpleValue<T>(T model, string regionId, TField field) where T : Models.Content
+        private void AddSimpleValue<T>(T model, string regionId, TField field) where T : Models.ContentBase
         {
-            if (model is Models.IDynamicModel)
+            if (model is Models.IDynamicContent dynamicModel)
             {
-                ((IList)((IDictionary<string, object>)((Models.IDynamicModel)(object)model).Regions)[regionId]).Add(
+                ((IList)((IDictionary<string, object>)dynamicModel.Regions)[regionId]).Add(
                     DeserializeValue(field));
             }
             else
@@ -517,11 +522,11 @@ namespace Piranha.Services
         /// <param name="regionId">The region id</param>
         /// <param name="fieldId">The field id</param>
         /// <param name="field">The field</param>
-        private void SetComplexValue<T>(T model, string regionId, string fieldId, TField field) where T : Models.Content
+        private void SetComplexValue<T>(T model, string regionId, string fieldId, TField field) where T : Models.ContentBase
         {
-            if (model is Models.IDynamicModel)
+            if (model is Models.IDynamicContent dynamicModel)
             {
-                ((IDictionary<string, object>)((IDictionary<string, object>)((Models.IDynamicModel)(object)model).Regions)[regionId])[fieldId] =
+                ((IDictionary<string, object>)((IDictionary<string, object>)dynamicModel.Regions)[regionId])[fieldId] =
                     DeserializeValue(field);
             }
             else
@@ -549,16 +554,17 @@ namespace Piranha.Services
         /// </summary>
         /// <typeparam name="T">The model type</typeparam>
         /// <param name="model">The model</param>
+        /// <param name="contentType">The content type</param>
         /// <param name="regionId">The region id</param>
         /// <param name="fields">The field</param>
-        private void AddComplexValue<T>(T model, Models.ContentType contentType, string regionId, IList<TField> fields) where T : Models.Content
+        private async Task AddComplexValueAsync<T>(T model, Models.ContentTypeBase contentType, string regionId, IList<TField> fields) where T : Models.ContentBase
         {
             if (fields.Count > 0)
             {
-                if (model is Models.IDynamicModel)
+                if (model is Models.IDynamicContent dynamicModel)
                 {
-                    var list = (IList)((IDictionary<string, object>)((Models.IDynamicModel)(object)model).Regions)[regionId];
-                    var obj = _factory.CreateDynamicRegion(contentType, regionId);
+                    var list = (IList)((IDictionary<string, object>)dynamicModel.Regions)[regionId];
+                    var obj = await _factory.CreateDynamicRegionAsync(contentType, regionId);
 
                     foreach (var field in fields)
                     {

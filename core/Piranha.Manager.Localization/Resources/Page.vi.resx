@@ -18,6 +18,9 @@
   <data name="An error occured while deleting the page" xml:space="preserve">
     <value>Có 1 lỗi đã xãy ra trong khi xóa trang</value>
   </data>
+  <data name="Archive" xml:space="preserve">
+    <value>Archive</value>
+  </data>
   <data name="Detach page" xml:space="preserve">
     <value>Tách trang ra</value>
   </data>
@@ -74,5 +77,8 @@
   </data>
   <data name="Your page title" xml:space="preserve">
     <value>Tiêu đề trang của bạn</value>
+  </data>
+  <data name="If comments should be enabled for this page" xml:space="preserve">
+    <value>If comments should be enabled for this page</value>
   </data>
 </root>

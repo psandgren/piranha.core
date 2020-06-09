@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -47,7 +47,7 @@ namespace Piranha.AspNetCore
         /// </summary>
         /// <param name="context">The HTTP Context</param>
         /// <param name="etag">The entity tag</param>
-        /// <param name="context">The modification date</param>
+        /// <param name="lastModified">The modification date</param>
         /// <returns>If the client has the same version cached</returns>
         public static bool IsCached(HttpContext context, string etag, DateTime? lastModified)
         {

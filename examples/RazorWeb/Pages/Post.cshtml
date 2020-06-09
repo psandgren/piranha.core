@@ -26,20 +26,20 @@
         </div>
     </div>
 
-    @if (Model.Data.Hero.PrimaryImage.HasValue)
+    @if (Model.Data.PrimaryImage.HasValue)
     {
         <div class="row justify-content-center">
             <div class="col-lg-10 col-md-12">
-                <img class="primary-image" src="@Url.Content(Model.Data.Hero.PrimaryImage)">
+                <img class="primary-image" src="@Url.Content(Model.Data.PrimaryImage)">
             </div>
         </div>
     }
 
     <div class="row justify-content-center">
         <div class="col col-lg-8 col-md-10">
-            @if (!string.IsNullOrEmpty(Model.Data.Hero.Ingress.Value))
+            @if (!string.IsNullOrEmpty(Model.Data.Excerpt))
             {
-                <p class="lead">@Model.Data.Hero.Ingress.Value</p>
+                <p class="lead">@Model.Data.Excerpt</p>
             }
 
             @Html.DisplayFor(m => m.Data.Blocks)
@@ -50,11 +50,12 @@
     {
         <div class="row justify-content-center comments">
             <div id="comments" class="col col-lg-8 col-md-10">
-                @if (Model.Data.isCommentsOpen)
+                @if (Model.Data.IsCommentsOpen)
                 {
                     <div class="alert alert-warning mt-2 mb-5">
-                        <form method="post" action="@Model.Data.Permalink?action=comment">
+                        <form asp-page-handler="SaveComment" method="post">
                             @Html.AntiForgeryToken()
+                            @Html.Hidden("Id", Model.Data.Id)
 
                             <h4 class="mb-3">Leave a comment</h4>
                             <p class="mb-4"><small>

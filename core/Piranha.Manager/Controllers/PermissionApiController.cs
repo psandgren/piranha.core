@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -43,6 +43,10 @@ namespace Piranha.Manager.Controllers
             // Alias permissions
             model.Aliases.Edit = (await _auth.AuthorizeAsync(User, Permission.AliasesEdit)).Succeeded;
             model.Aliases.Delete = (await _auth.AuthorizeAsync(User, Permission.AliasesDelete)).Succeeded;
+
+            // Comment permissions
+            model.Comments.Approve = (await _auth.AuthorizeAsync(User, Permission.CommentsApprove)).Succeeded;
+            model.Comments.Delete = (await _auth.AuthorizeAsync(User, Permission.CommentsDelete)).Succeeded;
 
             // Media permissions
             model.Media.Add = (await _auth.AuthorizeAsync(User, Permission.MediaAdd)).Succeeded;

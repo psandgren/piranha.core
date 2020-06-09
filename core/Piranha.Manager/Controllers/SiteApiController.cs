@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -86,8 +86,8 @@ namespace Piranha.Manager.Controllers
         /// <summary>
         /// Gets the site with the given id.
         /// </summary>
-        /// <param name="id">The unique id</param>
-        /// <returns>The page edit model</returns>
+        /// <param name="model">The site model</param>
+        /// <returns>The status of the operation</returns>
         [Route("save")]
         [HttpPost]
         [Authorize(Policy = Permission.SitesEdit)]
@@ -125,8 +125,8 @@ namespace Piranha.Manager.Controllers
         /// <summary>
         /// Gets the site with the given id.
         /// </summary>
-        /// <param name="id">The unique id</param>
-        /// <returns>The page edit model</returns>
+        /// <param name="model">The site model</param>
+        /// <returns>The status of the operation</returns>
         [Route("savecontent")]
         [HttpPost]
         [Authorize(Policy = Permission.SitesEdit)]

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -13,10 +13,10 @@ using Newtonsoft.Json;
 
 namespace Piranha.Data
 {
-    [Serializable]
     /// <summary>
     /// Connection between a page and a block.
     /// </summary>
+    [Serializable]
     public sealed class PageBlock : IContentBlock
     {
         /// <summary>

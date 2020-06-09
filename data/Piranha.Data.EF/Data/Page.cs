@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2011-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -14,7 +14,7 @@ using System.Collections.Generic;
 namespace Piranha.Data
 {
     [Serializable]
-    public sealed class Page : RoutedContent<PageField>
+    public sealed class Page : RoutedContentBase<PageField>
     {
         /// <summary>
         /// Gets/sets the page type id.
@@ -37,6 +37,16 @@ namespace Piranha.Data
         /// contains.
         /// </summary>
         public string ContentType { get; set; }
+
+        /// <summary>
+        /// Gets/sets the optional primary image id.
+        /// </summary>
+        public Guid? PrimaryImageId { get; set; }
+
+        /// <summary>
+        /// Gets/sets the optional excerpt.
+        /// </summary>
+        public string Excerpt { get; set; }
 
         /// <summary>
         /// Gets/sets the pages sort order in its
@@ -98,6 +108,11 @@ namespace Piranha.Data
         /// Gets/sets the available page blocks.
         /// </summary>
         public IList<PageBlock> Blocks { get; set; } = new List<PageBlock>();
+
+        /// <summary>
+        /// Gets/sets the available permissions.
+        /// </summary>
+        public IList<PagePermission> Permissions { get; set; } = new List<PagePermission>();
 
         /// <summary>
         /// Gets/sets the optional page this page is a copy of

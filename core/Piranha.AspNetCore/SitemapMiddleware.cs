@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -38,6 +38,7 @@ namespace Piranha.AspNetCore
         /// </summary>
         /// <param name="context">The current http context</param>
         /// <param name="api">The current api</param>
+        /// <param name="service">The application service</param>
         /// <returns>An async task</returns>
         public override async Task Invoke(HttpContext context, IApi api, IApplicationService service)
         {
@@ -49,7 +50,9 @@ namespace Piranha.AspNetCore
                 var host = context.Request.Host.Host;
                 var scheme = context.Request.Scheme;
                 var port = context.Request.Host.Port;
-                var baseUrl = scheme + "://" + host + (port.HasValue ? $":{port}" : "");
+                var prefix = service.Site.SitePrefix != null ?
+                    $"/{ service.Site.SitePrefix }" : "";
+                var baseUrl = scheme + "://" + host + (port.HasValue ? $":{port}" : "") + prefix;
 
                 if (url.ToLower() == "/sitemap.xml")
                 {
@@ -73,10 +76,12 @@ namespace Piranha.AspNetCore
 
                     foreach (var page in pages)
                     {
-                        var urls = await GetPageUrlsAsync(api, page, baseUrl);
+                        var urls = await GetPageUrlsAsync(api, page, baseUrl).ConfigureAwait(false);
 
                         if (urls.Count > 0)
+                        {
                             sitemap.AddRange(urls);
+                        }
                     }
                     context.Response.ContentType = "application/xml";
                     await context.Response.WriteAsync(sitemap.ToXml());

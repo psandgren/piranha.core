@@ -18,6 +18,9 @@
   <data name="An error occured while deleting the page" xml:space="preserve">
     <value>Det oppstod en feil under sletting av side</value>
   </data>
+  <data name="Archive" xml:space="preserve">
+    <value>Archive</value>
+  </data>
   <data name="Detach page" xml:space="preserve">
     <value>Detach page</value>
   </data>
@@ -74,5 +77,8 @@
   </data>
   <data name="Your page title" xml:space="preserve">
     <value>Din side tittel</value>
+  </data>
+  <data name="If comments should be enabled for this page" xml:space="preserve">
+    <value>If comments should be enabled for this page</value>
   </data>
 </root>

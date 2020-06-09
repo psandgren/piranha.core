@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2017-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -98,7 +98,8 @@ namespace Piranha
             ISiteTypeRepository siteTypeRepository,
             ICache cache = null,
             IStorage storage = null,
-            IImageProcessor processor = null)
+            IImageProcessor processor = null,
+            ISearch search = null)
         {
             // Store the cache
             _cache = cache;
@@ -113,8 +114,8 @@ namespace Piranha
             // Create services with dependencies
             Aliases = new AliasService(aliasRepository, Sites, cache);
             Media = new MediaService(mediaRepository, Params, storage, processor, cache);
-            Pages = new PageService(pageRepository, contentFactory, Sites, Params, cache);
-            Posts = new PostService(postRepository, contentFactory, Sites, Pages, Params, cache);
+            Pages = new PageService(pageRepository, contentFactory, Sites, Params, Media, cache, search);
+            Posts = new PostService(postRepository, contentFactory, Sites, Pages, Params, Media, cache, search);
             Archives = new ArchiveService(archiveRepository, Params, Posts);
         }
 

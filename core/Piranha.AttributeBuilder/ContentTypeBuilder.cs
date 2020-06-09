@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2016-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -110,11 +110,13 @@ namespace Piranha.AttributeBuilder
     /// </summary>
     /// <typeparam name="T">The builder type</typeparam>
     /// <typeparam name="TType">The content type</typeparam>
-    /// <typeparam name="TAttr">The attribute type</typeparam>
     public abstract class ContentTypeBuilder<T, TType>
         where T : ContentTypeBuilder<T, TType>
-        where TType : ContentType
+        where TType : ContentTypeBase
     {
+        /// <summary>
+        /// The currently imported types.
+        /// </summary>
         protected readonly List<Type> _types = new List<Type>();
 
         /// <summary>
@@ -280,7 +282,9 @@ namespace Piranha.AttributeBuilder
         private void RegisterField(Type type)
         {
             if (typeof(IEnumerable).IsAssignableFrom(type))
+            {
                 type = type.GenericTypeArguments.First();
+            }
 
             if (typeof(IField).IsAssignableFrom(type))
             {

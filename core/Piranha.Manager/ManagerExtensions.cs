@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2016-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -69,6 +69,22 @@ public static class ManagerModuleExtensions
                 policy.RequireClaim(Permission.Admin, Permission.Admin);
                 policy.RequireClaim(Permission.Aliases, Permission.Aliases);
                 policy.RequireClaim(Permission.AliasesEdit, Permission.AliasesEdit);
+            });
+
+            // Comment policies
+            o.AddPolicy(Permission.Comments, policy => {
+                policy.RequireClaim(Permission.Admin, Permission.Admin);
+                policy.RequireClaim(Permission.Comments, Permission.Comments);
+            });
+            o.AddPolicy(Permission.CommentsApprove, policy => {
+                policy.RequireClaim(Permission.Admin, Permission.Admin);
+                policy.RequireClaim(Permission.Comments, Permission.Comments);
+                policy.RequireClaim(Permission.CommentsApprove, Permission.CommentsApprove);
+            });
+            o.AddPolicy(Permission.CommentsDelete, policy => {
+                policy.RequireClaim(Permission.Admin, Permission.Admin);
+                policy.RequireClaim(Permission.Comments, Permission.Comments);
+                policy.RequireClaim(Permission.CommentsDelete, Permission.CommentsDelete);
             });
 
             // Config policies

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -55,6 +55,12 @@ namespace Piranha.WebApi
         /// Gets the icon url.
         /// </summary>
         public string IconUrl => "http://piranhacms.org/assets/twitter-shield.png";
+
+        /// <summary>
+        /// Gets/sets if anonymous users should be able to access
+        /// the api.
+        /// </summary>
+        internal static bool AllowAnonymousAccess { get; set; }
 
         /// <summary>
         /// The assembly.

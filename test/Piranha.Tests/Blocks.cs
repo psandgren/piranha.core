@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -12,16 +12,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
+using System.Threading.Tasks;
 using Xunit;
 using Piranha.Data;
-using Piranha.Repositories;
+using Piranha.Extend.Blocks;
 using Piranha.Services;
 
 namespace Piranha.Tests
 {
-    public class Blocks : BaseTests
+    public class Blocks : BaseTestsAsync
     {
         private Guid image1Id;
         private IContentService<Page, PageField, Models.PageBase> contentService;
@@ -29,27 +28,23 @@ namespace Piranha.Tests
         /// <summary>
         /// Sets up and initializes the tests.
         /// </summary>
-        protected override void Init() {
-            services = new ServiceCollection()
-                .AddDbContext<Db>(options =>
-                    options.UseSqlite("Filename=./piranha.tests.db"))
-                .AddPiranhaEF()
-                .AddSingleton<IStorage, Local.FileStorage>()
-                .BuildServiceProvider();
-
-            using (var api = CreateApi()) {
+        public override async Task InitializeAsync()
+        {
+            using (var api = CreateApi())
+            {
                 Piranha.App.Init(api);
 
-                contentService = new ContentService<Page, PageField, Models.PageBase>(new ContentFactory(services), Piranha.Data.EF.Module.Mapper);
+                contentService = new ContentService<Page, PageField, Models.PageBase>(new ContentFactory(_services), Piranha.Data.EF.Module.Mapper);
 
                 // Add media
-                using (var stream = File.OpenRead("../../../Assets/HLD_Screenshot_01_mech_1080.png")) {
+                using (var stream = File.OpenRead("../../../Assets/HLD_Screenshot_01_mech_1080.png"))
+                {
                     var image1 = new Models.StreamMediaContent
                     {
                         Filename = "HLD_Screenshot_01_mech_1080.png",
                         Data = stream
                     };
-                    api.Media.Save(image1);
+                    await api.Media.SaveAsync(image1);
 
                     image1Id = image1.Id.Value;
                 }
@@ -60,14 +55,176 @@ namespace Piranha.Tests
         /// Cleans up any possible data and resources
         /// created by the test.
         /// </summary>
-        protected override void Cleanup() {
-            using (var api = CreateApi()) {
-                var media = api.Media.GetAll();
+        public override async Task DisposeAsync()
+        {
+            using (var api = CreateApi())
+            {
+                var media = await api.Media.GetAllByFolderIdAsync();
 
-                foreach (var item in media) {
-                    api.Media.Delete(item);
+                foreach (var item in media)
+                {
+                    await api.Media.DeleteAsync(item);
                 }
             }
+        }
+
+        [Fact]
+        public void AudioBlockNoTitle()
+        {
+            var block = new AudioBlock();
+            var title = block.GetTitle();
+
+            Assert.Equal("No audio selected", title);
+        }
+
+        [Fact]
+        public async Task AudioBlockHasTitle()
+        {
+            using (var api = CreateApi())
+            {
+                var media = await api.Media.GetByIdAsync(image1Id);
+
+                var block = new AudioBlock()
+                {
+                    Body = new Extend.Fields.AudioField
+                    {
+                        Id = media.Id
+                    }
+                };
+                await block.Body.Init(api);
+
+                var title = block.GetTitle();
+
+                Assert.Equal("HLD_Screenshot_01_mech_1080.png", title);
+            }
+        }
+
+        [Fact]
+        public void ImageBlockNoTitle()
+        {
+            var block = new ImageBlock();
+            var title = block.GetTitle();
+
+            Assert.Equal("No image selected", title);
+        }
+
+        [Fact]
+        public async Task ImageBlockHasTitle()
+        {
+            using (var api = CreateApi())
+            {
+                var media = await api.Media.GetByIdAsync(image1Id);
+
+                var block = new ImageBlock()
+                {
+                    Body = new Extend.Fields.ImageField
+                    {
+                        Id = media.Id
+                    }
+                };
+                await block.Body.Init(api);
+
+                var title = block.GetTitle();
+
+                Assert.Equal("HLD_Screenshot_01_mech_1080.png", title);
+            }
+        }
+
+        [Fact]
+        public void HtmlBlockNoTitle()
+        {
+            var block = new HtmlBlock();
+            var title = block.GetTitle();
+
+            Assert.Equal("Empty", title);
+        }
+
+        [Fact]
+        public void HtmlBlockHasTitle()
+        {
+            var block = new HtmlBlock()
+            {
+                Body = new Extend.Fields.HtmlField
+                {
+                    Value = "<p>Lorem ipsum</p>"
+                }
+            };
+            var title = block.GetTitle();
+
+            Assert.Equal("Lorem ipsum", title);
+        }
+
+        [Fact]
+        public void HtmlBlockHasLongTitle()
+        {
+            var block = new HtmlBlock()
+            {
+                Body = new Extend.Fields.HtmlField
+                {
+                    Value = "<p>Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Integer posuere erat a ante venenatis dapibus posuere velit aliquet. Maecenas faucibus mollis interdum. Donec id elit non mi porta gravida at eget metus. Nulla vitae elit libero, a pharetra augue. Sed posuere consectetur est at lobortis. Etiam porta sem malesuada magna mollis euismod.</p>"
+                }
+            };
+            var title = block.GetTitle();
+
+            Assert.Equal(43, title.Length);
+            Assert.EndsWith("...", title);
+        }
+
+        [Fact]
+        public void QuoteBlockNoTitle()
+        {
+            var block = new QuoteBlock();
+            var title = block.GetTitle();
+
+            Assert.Equal("Empty", title);
+        }
+
+        [Fact]
+        public void QuoteBlockHasTitle()
+        {
+            var block = new QuoteBlock()
+            {
+                Body = new Extend.Fields.TextField
+                {
+                    Value = "To be or not to be"
+                }
+            };
+            var title = block.GetTitle();
+
+            Assert.Equal("To be or not to be", title);
+        }
+
+        [Fact]
+        public void SeparatorBlockTitle()
+        {
+            var block = new SeparatorBlock();
+            var title = block.GetTitle();
+
+            Assert.Equal("----", title);
+        }
+
+        [Fact]
+        public void TextBlockNoTitle()
+        {
+            var block = new TextBlock();
+            var title = block.GetTitle();
+
+            Assert.Equal("Empty", title);
+        }
+
+        [Fact]
+        public void TextBlockHasTitle()
+        {
+            var block = new TextBlock()
+            {
+                Body = new Extend.Fields.TextField
+                {
+                    Value = "Lorem ipsum"
+                }
+            };
+            var title = block.GetTitle();
+
+            Assert.Equal("Lorem ipsum", title);
         }
 
         [Fact]
@@ -203,8 +360,6 @@ namespace Piranha.Tests
 
             Assert.Equal(typeof(Extend.Blocks.ImageBlock), models.First().GetType());
             Assert.Null(((Extend.Blocks.ImageBlock)models[0]).Body.Media);
-            //Assert.NotNull(((Extend.Blocks.ImageBlock)models[0]).Body.Media);
-            //Assert.Equal("HLD_Screenshot_01_mech_1080.png", ((Extend.Blocks.ImageBlock)models[0]).Body.Media.Filename);
         }
 
         [Fact]
@@ -310,6 +465,10 @@ namespace Piranha.Tests
             var models = new List<Extend.Block>();
             models.Add(new Extend.Blocks.QuoteBlock
             {
+                Author = new Extend.Fields.StringField
+                {
+                    Value = "Joe Doe"
+                },
                 Body = new Extend.Fields.TextField
                 {
                     Value = "Lorem ipsum"
@@ -322,31 +481,10 @@ namespace Piranha.Tests
             Assert.Single(blocks);
 
             Assert.Equal(typeof(Extend.Blocks.QuoteBlock).FullName, blocks[0].CLRType);
-            Assert.Equal(typeof(Extend.Fields.TextField).FullName, blocks[0].Fields[0].CLRType);
-            Assert.Equal("Lorem ipsum", blocks[0].Fields[0].Value);
-        }
-
-        private IApi CreateApi()
-        {
-            var factory = new ContentFactory(services);
-            var serviceFactory = new ContentServiceFactory(factory);
-
-            var db = GetDb();
-
-            return new Api(
-                factory,
-                new AliasRepository(db),
-                new ArchiveRepository(db),
-                new Piranha.Repositories.MediaRepository(db),
-                new PageRepository(db, serviceFactory),
-                new PageTypeRepository(db),
-                new ParamRepository(db),
-                new PostRepository(db, serviceFactory),
-                new PostTypeRepository(db),
-                new SiteRepository(db, serviceFactory),
-                new SiteTypeRepository(db),
-                storage: storage
-            );
+            Assert.Equal(typeof(Extend.Fields.StringField).FullName, blocks[0].Fields[0].CLRType);
+            Assert.Equal(typeof(Extend.Fields.TextField).FullName, blocks[0].Fields[1].CLRType);
+            Assert.Equal("Joe Doe", blocks[0].Fields[0].Value);
+            Assert.Equal("Lorem ipsum", blocks[0].Fields[1].Value);
         }
     }
 }

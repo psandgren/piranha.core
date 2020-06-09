@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -24,12 +24,13 @@ namespace Piranha.Models
         /// below the item with the given id.
         /// </summary>
         /// <param name="id">The unique id</param>
+        /// <param name="includeRootNode">If the root node should be included</param>
         /// <returns>The partial structure</returns>
-        public TThis GetPartial(Guid? id)
+        public TThis GetPartial(Guid? id, bool includeRootNode = false)
         {
             if (id.HasValue)
             {
-                return GetPartialRecursive(this, id.Value);
+                return GetPartialRecursive(this, id.Value, includeRootNode);
             }
             return (TThis)this;
         }
@@ -53,18 +54,29 @@ namespace Piranha.Models
         /// items recursively.
         /// </summary>
         /// <param name="items">The items</param>
-        /// <param name="pageId">The unique id</param>
+        /// <param name="id">The unique id</param>
+        /// <param name="includeRootNode">If the root node should be included</param>
         /// <returns>The partial structure if found</returns>
-        private TThis GetPartialRecursive(IList<T> items, Guid id)
+        private TThis GetPartialRecursive(IList<T> items, Guid id, bool includeRootNode)
         {
             foreach (var item in items)
             {
                 if (item.Id == id)
                 {
-                    return item.Items;
+                    if (includeRootNode)
+                    {
+                        var structure = Activator.CreateInstance<TThis>();
+                        structure.Add(item);
+
+                        return structure;
+                    }
+                    else
+                    {
+                        return item.Items;
+                    }
                 }
 
-                var partial = GetPartialRecursive(item.Items, id);
+                var partial = GetPartialRecursive(item.Items, id, includeRootNode);
 
                 if (partial != null)
                 {
@@ -79,7 +91,7 @@ namespace Piranha.Models
         /// items recursively.
         /// </summary>
         /// <param name="items">The items</param>
-        /// <param name="pageId">The unique id</param>
+        /// <param name="id">The unique id</param>
         /// <returns>The breadcrumb items</returns>
         private IList<T> GetBreadcrumbRecursive(IList<T> items, Guid id)
         {

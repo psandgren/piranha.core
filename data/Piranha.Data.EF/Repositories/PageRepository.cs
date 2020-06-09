@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2016-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -95,57 +95,30 @@ namespace Piranha.Repositories
         /// <param name="page">The page number</param>
         /// <param name="pageSize">The page size</param>
         /// <returns>The available comments</returns>
-        public async Task<IEnumerable<Models.Comment>> GetAllComments(Guid? pageId, bool onlyApproved,
+        public Task<IEnumerable<Models.Comment>> GetAllComments(Guid? pageId, bool onlyApproved,
             int page, int pageSize)
         {
-            // Create base query
-            IQueryable<PageComment> query = _db.PageComments
-                .AsNoTracking();
+            return GetAllComments(pageId, onlyApproved, false, page, pageSize);
+        }
 
-            // Check if only should include a comments for a certain page
-            if (pageId.HasValue)
-            {
-                query = query.Where(c => c.PageId == pageId.Value);
-            }
-
-            // Check if we should only include approved
-            if (onlyApproved)
-            {
-                query = query.Where(c => c.IsApproved);
-            }
-
-            // Order the comments by date
-            query = query.OrderByDescending(c => c.Created);
-
-            // Check if this is a paged query
-            if (pageSize > 0)
-            {
-                query = query
-                    .Skip(page * pageSize)
-                    .Take(pageSize);
-            }
-
-            // Get the comments
-            return await query
-                .Select(c => new Models.Comment
-                {
-                    Id = c.Id,
-                    ContentId = c.PageId,
-                    UserId = c.UserId,
-                    Author = c.Author,
-                    Email = c.Email,
-                    Url = c.Url,
-                    IsApproved = c.IsApproved,
-                    Body = c.Body,
-                    Created = c.Created
-                }).ToListAsync();
+        /// <summary>
+        /// Gets the pending comments available for the page with the specified id.
+        /// </summary>
+        /// <param name="pageId">The unique page id</param>
+        /// <param name="page">The page number</param>
+        /// <param name="pageSize">The page size</param>
+        /// <returns>The available comments</returns>
+        public Task<IEnumerable<Models.Comment>> GetAllPendingComments(Guid? pageId,
+            int page, int pageSize)
+        {
+            return GetAllComments(pageId, false, true, page, pageSize);
         }
 
         /// <summary>
         /// Gets the site startpage.
         /// </summary>
         /// <typeparam name="T">The model type</typeparam>
-        /// <param param name="siteId">The site id</param>
+        /// <param name="siteId">The site id</param>
         /// <returns>The page model</returns>
         public async Task<T> GetStartpage<T>(Guid siteId) where T : Models.PageBase
         {
@@ -155,7 +128,7 @@ namespace Piranha.Repositories
 
             if (page != null)
             {
-                return _contentService.Transform<T>(page, App.PageTypes.GetById(page.PageTypeId), Process);
+                return await _contentService.TransformAsync<T>(page, App.PageTypes.GetById(page.PageTypeId), ProcessAsync);
             }
             return null;
         }
@@ -174,7 +147,7 @@ namespace Piranha.Repositories
 
             if (page != null)
             {
-                return _contentService.Transform<T>(page, App.PageTypes.GetById(page.PageTypeId), Process);
+                return await _contentService.TransformAsync<T>(page, App.PageTypes.GetById(page.PageTypeId), ProcessAsync);
             }
             return null;
         }
@@ -194,7 +167,7 @@ namespace Piranha.Repositories
 
             if (page != null)
             {
-                return _contentService.Transform<T>(page, App.PageTypes.GetById(page.PageTypeId), Process);
+                return await _contentService.TransformAsync<T>(page, App.PageTypes.GetById(page.PageTypeId), ProcessAsync);
             }
             return null;
         }
@@ -224,7 +197,7 @@ namespace Piranha.Repositories
                     // Transform data model
                     var page = JsonConvert.DeserializeObject<Page>(draft.Data);
 
-                    return _contentService.Transform<T>(page, App.PageTypes.GetById(page.PageTypeId), Process);
+                    return await _contentService.TransformAsync<T>(page, App.PageTypes.GetById(page.PageTypeId), ProcessAsync);
                 }
             }
             return null;
@@ -261,7 +234,6 @@ namespace Piranha.Repositories
 
             return affected;
         }
-
 
         /// <summary>
         /// Gets the comment with the given id.
@@ -485,9 +457,70 @@ namespace Piranha.Repositories
         }
 
         /// <summary>
+        /// Gets the comments available for the page with the specified id. If no page id
+        /// is provided all comments are fetched.
+        /// </summary>
+        /// <param name="pageId">The unique page id</param>
+        /// <param name="onlyApproved">If only approved comments should be fetched</param>
+        /// <param name="onlyPending">If only pending comments should be fetched</param>
+        /// <param name="page">The page number</param>
+        /// <param name="pageSize">The page size</param>
+        /// <returns>The available comments</returns>
+        public async Task<IEnumerable<Models.Comment>> GetAllComments(Guid? pageId, bool onlyApproved,
+            bool onlyPending, int page, int pageSize)
+        {
+            // Create base query
+            IQueryable<PageComment> query = _db.PageComments
+                .AsNoTracking();
+
+            // Check if only should include a comments for a certain post
+            if (pageId.HasValue)
+            {
+                query = query.Where(c => c.PageId == pageId.Value);
+            }
+
+            // Check if we should only include approved
+            if (onlyPending)
+            {
+                query = query.Where(c => !c.IsApproved);
+            }
+            else if (onlyApproved)
+            {
+                query = query.Where(c => c.IsApproved);
+            }
+
+            // Order the comments by date
+            query = query.OrderByDescending(c => c.Created);
+
+            // Check if this is a paged query
+            if (pageSize > 0)
+            {
+                query = query
+                    .Skip(page * pageSize)
+                    .Take(pageSize);
+            }
+
+            // Get the comments
+            return await query
+                .Select(c => new Models.Comment
+                {
+                    Id = c.Id,
+                    ContentId = c.PageId,
+                    UserId = c.UserId,
+                    Author = c.Author,
+                    Email = c.Email,
+                    Url = c.Url,
+                    IsApproved = c.IsApproved,
+                    Body = c.Body,
+                    Created = c.Created
+                }).ToListAsync().ConfigureAwait(false);
+        }
+
+        /// <summary>
         /// Saves the given page model
         /// </summary>
         /// <param name="model">The page model</param>
+        /// <param name="isDraft">If the model should be saved as a draft</param>
         private async Task<IEnumerable<Guid>> Save<T>(T model, bool isDraft) where T : Models.PageBase
         {
             var type = App.PageTypes.GetById(model.TypeId);
@@ -504,6 +537,7 @@ namespace Piranha.Repositories
                 }
 
                 var page = await pageQuery
+                    .Include(p => p.Permissions)
                     .Include(p => p.Blocks).ThenInclude(b => b.Block).ThenInclude(b => b.Fields)
                     .Include(p => p.Fields)
                     .FirstOrDefaultAsync(p => p.Id == model.Id)
@@ -585,6 +619,16 @@ namespace Piranha.Repositories
                     page.Route = model.Route;
                     page.Published = model.Published;
                     page.LastModified = DateTime.Now;
+
+                    page.Permissions.Clear();
+                    foreach (var permission in model.Permissions)
+                    {
+                        page.Permissions.Add(new PagePermission
+                        {
+                            PageId = page.Id,
+                            Permission = permission
+                        });
+                    }
 
                     if (!isDraft)
                     {
@@ -668,6 +712,17 @@ namespace Piranha.Repositories
                 // Set if comments should be enabled
                 page.EnableComments = model.EnableComments;
                 page.CloseCommentsAfterDays = model.CloseCommentsAfterDays;
+
+                // Update permissions
+                page.Permissions.Clear();
+                foreach (var permission in model.Permissions)
+                {
+                    page.Permissions.Add(new PagePermission
+                    {
+                        PageId = page.Id,
+                        Permission = permission
+                    });
+                }
 
                 // Make sure foreign key is set for fields
                 if (!isDraft)
@@ -819,15 +874,15 @@ namespace Piranha.Repositories
         /// <summary>
         /// Gets the base query for loading pages.
         /// </summary>
-        /// <param name="fullModel">If this is a full load or not</param>
         /// <typeparam name="T">The requested model type</typeparam>
         /// <returns>The queryable</returns>
         private IQueryable<Page> GetQuery<T>()
         {
             var loadRelated = !typeof(Models.IContentInfo).IsAssignableFrom(typeof(T));
 
-            var query = _db.Pages
-                .AsNoTracking();
+            IQueryable<Page> query = _db.Pages
+                .AsNoTracking()
+                .Include(p => p.Permissions);
 
             if (loadRelated)
             {
@@ -843,8 +898,15 @@ namespace Piranha.Repositories
         /// </summary>
         /// <param name="page">The source page</param>
         /// <param name="model">The targe model</param>
-        private async void Process<T>(Data.Page page, T model) where T : Models.PageBase
+        private async Task ProcessAsync<T>(Data.Page page, T model) where T : Models.PageBase
         {
+            // Permissions
+            foreach (var permission in page.Permissions)
+            {
+                model.Permissions.Add(permission.Permission);
+            }
+
+            // Comments
             model.EnableComments = page.EnableComments;
             if (model.EnableComments)
             {
@@ -852,6 +914,7 @@ namespace Piranha.Repositories
             }
             model.CloseCommentsAfterDays = page.CloseCommentsAfterDays;
 
+            // Blocks
             if (!(model is Models.IContentInfo))
             {
                 if (page.Blocks.Count > 0)
@@ -877,6 +940,7 @@ namespace Piranha.Repositories
         /// <summary>
         /// Moves the pages around. This is done when a page is deleted or moved in the structure.
         /// </summary>
+        /// <param name="pages">The pages</param>
         /// <param name="pageId">The id of the page that is moved</param>
         /// <param name="siteId">The site id</param>
         /// <param name="parentId">The parent id</param>

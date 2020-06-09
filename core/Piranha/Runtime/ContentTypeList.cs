@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -14,7 +14,7 @@ using Piranha.Models;
 
 namespace Piranha.Runtime
 {
-    public sealed class ContentTypeList<T> : List<T> where T : ContentType
+    public sealed class ContentTypeList<T> : List<T> where T : ContentTypeBase
     {
         /// <summary>
         /// Initializes the model from the given list of types.

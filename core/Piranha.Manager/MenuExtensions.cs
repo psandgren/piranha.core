@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -19,6 +19,7 @@ namespace Piranha.Manager
         /// <summary>
         /// Gets the applicable menu structure for the given user.
         /// </summary>
+        /// <param name="items">The menu items to filter</param>
         /// <param name="user">The user</param>
         /// <param name="auth">The authorization service</param>
         /// <returns></returns>

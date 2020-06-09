@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -8,10 +8,8 @@
  *
  */
 
-using Newtonsoft.Json;
 using System;
 using System.Threading.Tasks;
-using Piranha.Services;
 
 namespace Piranha.Extend.Fields
 {
@@ -72,14 +70,16 @@ namespace Piranha.Extend.Fields
         public virtual Task<T> GetPageAsync<T>(IApi api) where T : Models.GenericPage<T>
         {
             if (Id.HasValue)
+            {
                 return api.Pages.GetByIdAsync<T>(Id.Value);
+            }
             return null;
         }
 
         /// <summary>
         /// Implicit operator for converting a Guid id to a field.
         /// </summary>
-        /// <param name="str">The string value</param>
+        /// <param name="guid">The guid value</param>
         public static implicit operator PageField(Guid guid)
         {
             return new PageField { Id = guid };

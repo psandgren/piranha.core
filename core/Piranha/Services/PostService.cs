@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -25,7 +25,9 @@ namespace Piranha.Services
         private readonly ISiteService _siteService;
         private readonly IPageService _pageService;
         private readonly IParamService _paramService;
+        private readonly IMediaService _mediaService;
         private readonly ICache _cache;
+        private readonly ISearch _search;
 
         /// <summary>
         /// Default constructor.
@@ -35,14 +37,19 @@ namespace Piranha.Services
         /// <param name="siteService">The site service</param>
         /// <param name="pageService">The page service</param>
         /// <param name="paramService">The param service</param>
+        /// <param name="mediaService">The media service</param>
         /// <param name="cache">The optional model cache</param>
-        public PostService(IPostRepository repo, IContentFactory factory, ISiteService siteService, IPageService pageService, IParamService paramService, ICache cache = null)
+        /// <param name="search">The optional search service</param>
+        public PostService(IPostRepository repo, IContentFactory factory, ISiteService siteService, IPageService pageService,
+            IParamService paramService, IMediaService mediaService, ICache cache = null, ISearch search = null)
         {
             _repo = repo;
             _factory = factory;
             _siteService = siteService;
             _pageService = pageService;
             _paramService = paramService;
+            _mediaService = mediaService;
+            _search = search;
 
             if ((int)App.CacheLevel > 2)
             {
@@ -54,7 +61,7 @@ namespace Piranha.Services
         /// Creates and initializes a new post of the specified type.
         /// </summary>
         /// <returns>The created post</returns>
-        public T Create<T>(string typeId = null) where T : PostBase
+        public async Task<T> CreateAsync<T>(string typeId = null) where T : PostBase
         {
             if (string.IsNullOrEmpty(typeId))
             {
@@ -65,7 +72,7 @@ namespace Piranha.Services
 
             if (type != null)
             {
-                var model = _factory.Create<T>(type);
+                var model = await _factory.CreateAsync<T>(type).ConfigureAwait(false);
 
                 using (var config = new Config(_paramService))
                 {
@@ -81,6 +88,8 @@ namespace Piranha.Services
         /// Gets the available posts for the specified blog.
         /// </summary>
         /// <param name="blogId">The unique blog id</param>
+        /// <param name="index">The optional page to fetch</param>
+        /// <param name="pageSize">The optional page size</param>
         /// <returns>The posts</returns>
         public Task<IEnumerable<DynamicPost>> GetAllAsync(Guid blogId, int? index = null, int? pageSize = null)
         {
@@ -91,6 +100,8 @@ namespace Piranha.Services
         /// Gets the available post items.
         /// </summary>
         /// <param name="blogId">The unique id</param>
+        /// <param name="index">The optional page to fetch</param>
+        /// <param name="pageSize">The optional page size</param>
         /// <returns>The posts</returns>
         public async Task<IEnumerable<T>> GetAllAsync<T>(Guid blogId, int? index = null, int? pageSize = null) where T : PostBase
         {
@@ -185,7 +196,7 @@ namespace Piranha.Services
         /// <summary>
         /// Gets all available categories for the specified blog.
         /// </summary>
-        /// <param name="id">The blog id</param>
+        /// <param name="blogId">The blog id</param>
         /// <returns>The available categories</returns>
         public Task<IEnumerable<Taxonomy>> GetAllCategoriesAsync(Guid blogId)
         {
@@ -195,7 +206,7 @@ namespace Piranha.Services
         /// <summary>
         /// Gets all available tags for the specified blog.
         /// </summary>
-        /// <param name="id">The blog id</param>
+        /// <param name="blogId">The blog id</param>
         /// <returns>The available tags</returns>
         public Task<IEnumerable<Taxonomy>> GetAllTagsAsync(Guid blogId)
         {
@@ -221,33 +232,24 @@ namespace Piranha.Services
         /// <param name="page">The optional page number</param>
         /// <param name="pageSize">The optional page size</param>
         /// <returns>The available comments</returns>
-        public async Task<IEnumerable<Comment>> GetAllCommentsAsync(Guid? postId = null, bool onlyApproved = true,
+        public Task<IEnumerable<Comment>> GetAllCommentsAsync(Guid? postId = null, bool onlyApproved = true,
             int? page = null, int? pageSize = null)
         {
-            // Ensure page number
-            if (!page.HasValue)
-            {
-                page = 0;
-            }
+            return GetAllCommentsAsync(postId, onlyApproved, false, page, pageSize);
+        }
 
-            // Ensure page size
-            if (!pageSize.HasValue)
-            {
-                using (var config = new Config(_paramService))
-                {
-                    pageSize = config.CommentsPageSize;
-                }
-            }
-
-            // Get the comments
-            var comments = await _repo.GetAllComments(postId, onlyApproved, page.Value, pageSize.Value).ConfigureAwait(false);
-
-            // Execute hook
-            foreach (var comment in comments)
-            {
-                App.Hooks.OnLoad<Comment>(comment);
-            }
-            return comments;
+        /// <summary>
+        /// Gets the pending comments available for the post with the specified id. If no post id
+        /// is provided all comments are fetched.
+        /// </summary>
+        /// <param name="postId">The unique post id</param>
+        /// <param name="page">The optional page number</param>
+        /// <param name="pageSize">The optional page size</param>
+        /// <returns>The available comments</returns>
+        public Task<IEnumerable<Comment>> GetAllPendingCommentsAsync(Guid? postId = null,
+            int? page = null, int? pageSize = null)
+        {
+            return GetAllCommentsAsync(postId, false, true, page, pageSize);
         }
 
         /// <summary>
@@ -317,7 +319,7 @@ namespace Piranha.Services
         /// <summary>
         /// Gets the post model with the specified slug.
         /// </summary>
-        /// <param name="blog">The unique blog slug</param>
+        /// <param name="blogId">The unique blog slug</param>
         /// <param name="slug">The unique slug</param>
         /// <returns>The post model</returns>
         public Task<DynamicPost> GetBySlugAsync(Guid blogId, string slug)
@@ -329,7 +331,7 @@ namespace Piranha.Services
         /// Gets the post model with the specified slug.
         /// </summary>
         /// <typeparam name="T">The model type</typeparam>
-        /// <param name="blog">The unique blog slug</param>
+        /// <param name="blogId">The unique blog slug</param>
         /// <param name="slug">The unique slug</param>
         /// <returns>The post model</returns>
         public async Task<T> GetBySlugAsync<T>(Guid blogId, string slug) where T : PostBase
@@ -359,7 +361,7 @@ namespace Piranha.Services
                 {
                     var blog = await _pageService.GetByIdAsync<PageInfo>(model.BlogId).ConfigureAwait(false);
 
-                    OnLoad(model, blog);
+                    await OnLoadAsync(model, blog).ConfigureAwait(false);
                 }
             }
 
@@ -373,7 +375,6 @@ namespace Piranha.Services
         /// <summary>
         /// Gets the draft for the post model with the specified id.
         /// </summary>
-        /// <typeparam name="T">The model type</typeparam>
         /// <param name="id">The unique id</param>
         /// <returns>The draft, or null if no draft exists</returns>
         public Task<DynamicPost> GetDraftByIdAsync(Guid id)
@@ -395,7 +396,7 @@ namespace Piranha.Services
             {
                 var blog = await _pageService.GetByIdAsync<PageInfo>(draft.BlogId).ConfigureAwait(false);
 
-                OnLoad(draft, blog, true);
+                await OnLoadAsync(draft, blog, true);
             }
             return draft;
         }
@@ -549,6 +550,53 @@ namespace Piranha.Services
         }
 
         /// <summary>
+        /// Gets the comments available for the post with the specified id.
+        /// </summary>
+        /// <param name="postId">The unique post id</param>
+        /// <param name="onlyApproved">If only approved comments should be fetched</param>
+        /// <param name="onlyPending">If only pending comments should be fetched</param>
+        /// <param name="page">The optional page number</param>
+        /// <param name="pageSize">The optional page size</param>
+        /// <returns>The available comments</returns>
+        private async Task<IEnumerable<Comment>> GetAllCommentsAsync(Guid? postId = null, bool onlyApproved = true,
+            bool onlyPending = false, int? page = null, int? pageSize = null)
+        {
+            // Ensure page number
+            if (!page.HasValue)
+            {
+                page = 0;
+            }
+
+            // Ensure page size
+            if (!pageSize.HasValue)
+            {
+                using (var config = new Config(_paramService))
+                {
+                    pageSize = config.CommentsPageSize;
+                }
+            }
+
+            // Get the comments
+            IEnumerable<Comment> comments = null;
+
+            if (onlyPending)
+            {
+                comments = await _repo.GetAllPendingComments(postId, page.Value, pageSize.Value).ConfigureAwait(false);
+            }
+            else
+            {
+                comments = await _repo.GetAllComments(postId, onlyApproved, page.Value, pageSize.Value).ConfigureAwait(false);
+            }
+
+            // Execute hook
+            foreach (var comment in comments)
+            {
+                App.Hooks.OnLoad<Comment>(comment);
+            }
+            return comments;
+        }
+
+        /// <summary>
         /// Saves the comment.
         /// </summary>
         /// <param name="model">The comment model</param>
@@ -605,6 +653,7 @@ namespace Piranha.Services
         /// Saves the given post model
         /// </summary>
         /// <param name="model">The post model</param>
+        /// <param name="isDraft">If the model should be saved as a draft</param>
         private async Task SaveAsync<T>(T model, bool isDraft) where T : PostBase
         {
             // Ensure id
@@ -639,6 +688,13 @@ namespace Piranha.Services
             else
             {
                 model.Slug = Utils.GenerateSlug(model.Slug, false);
+            }
+
+            // Ensure slug is not null or empty
+            // after removing unwanted characters
+            if (string.IsNullOrWhiteSpace(model.Slug))
+            {
+                throw new ValidationException("The generated slug is empty as the title only contains special characters, please specify a slug to save the post.");
             }
 
             // Ensure category
@@ -684,6 +740,12 @@ namespace Piranha.Services
             }
 
             App.Hooks.OnAfterSave<PostBase>(model);
+
+            // Update search document
+            if (_search != null)
+            {
+                await _search.SavePostAsync(model);
+            }
 
             // Remove the post from cache
             RemoveFromCache(model);
@@ -735,10 +797,15 @@ namespace Piranha.Services
             await _repo.Delete(model.Id).ConfigureAwait(false);
             App.Hooks.OnAfterDelete<PostBase>(model);
 
+            // Delete search document
+            if (_search != null)
+            {
+                await _search.DeletePostAsync(model);
+            }
+
             // Remove from cache & invalidate sitemap
             RemoveFromCache(model);
         }
-
 
         /// <summary>
         /// Deletes the comment with the specified id.
@@ -799,7 +866,7 @@ namespace Piranha.Services
 
                 if (model != null)
                 {
-                    _factory.Init(model, App.PostTypes.GetById(model.TypeId));
+                    await _factory.InitAsync(model, App.PostTypes.GetById(model.TypeId));
                 }
             }
 
@@ -817,7 +884,7 @@ namespace Piranha.Services
                         blogPages.Add(blog);
                     }
 
-                    OnLoad(model, blog);
+                    await OnLoadAsync(model, blog).ConfigureAwait(false);
                 }
             }
 
@@ -854,7 +921,7 @@ namespace Piranha.Services
         /// <param name="model">The model</param>
         /// <param name="blog">The blog page the post belongs to</param>
         /// <param name="isDraft">If this is a draft</param>
-        private void OnLoad(PostBase model, PageInfo blog, bool isDraft = false)
+        private async Task OnLoadAsync(PostBase model, PageInfo blog, bool isDraft = false)
         {
             if (model != null)
             {
@@ -862,13 +929,30 @@ namespace Piranha.Services
                 model.Permalink = $"/{blog.Slug}/{model.Slug}";
 
                 // Initialize model
-                if (typeof(IDynamicModel).IsAssignableFrom(model.GetType()))
+                if (model is IDynamicContent dynamicModel)
                 {
-                    _factory.InitDynamic((DynamicPost)model, App.PostTypes.GetById(model.TypeId));
+                    await _factory.InitDynamicAsync(dynamicModel, App.PostTypes.GetById(model.TypeId));
                 }
                 else
                 {
-                    _factory.Init(model, App.PostTypes.GetById(model.TypeId));
+                    await _factory.InitAsync(model, App.PostTypes.GetById(model.TypeId));
+                }
+
+                // Initialize primary image
+                if (model.PrimaryImage == null)
+                {
+                    model.PrimaryImage = new Extend.Fields.ImageField();
+                }
+
+                if (model.PrimaryImage.Id.HasValue)
+                {
+                    model.PrimaryImage.Media = await _mediaService.GetByIdAsync(model.PrimaryImage.Id.Value).ConfigureAwait(false);
+
+                    // Clear id if the image has been deleted
+                    if (model.PrimaryImage.Media == null)
+                    {
+                        model.PrimaryImage.Id = null;
+                    }
                 }
 
                 App.Hooks.OnLoad(model);

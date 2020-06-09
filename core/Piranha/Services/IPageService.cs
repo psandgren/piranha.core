@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -21,14 +21,7 @@ namespace Piranha.Services
         /// Creates and initializes a new page of the specified type.
         /// </summary>
         /// <returns>The created page</returns>
-        T Create<T>(string typeId = null) where T : Models.PageBase;
-
-        /// <summary>
-        /// Creates and initializes a copy of the given page.
-        /// </summary>
-        /// <param name="originalPage">The orginal page</param>
-        /// <returns>The created copy</returns>
-        T Copy<T>(T originalPage) where T : Models.PageBase;
+        Task<T> CreateAsync<T>(string typeId = null) where T : Models.PageBase;
 
         /// <summary>
         /// Creates and initializes a copy of the given page.
@@ -90,6 +83,17 @@ namespace Piranha.Services
             int? page = null, int? pageSize = null);
 
         /// <summary>
+        /// Gets the pending comments available for the page with the specified id. If no page id
+        /// is provided all comments are fetched.
+        /// </summary>
+        /// <param name="pageId">The unique page id</param>
+        /// <param name="page">The optional page number</param>
+        /// <param name="pageSize">The optional page size</param>
+        /// <returns>The available comments</returns>
+        Task<IEnumerable<Comment>> GetAllPendingCommentsAsync(Guid? pageId = null,
+            int? page = null, int? pageSize = null);
+
+        /// <summary>
         /// Gets the site startpage.
         /// </summary>
         /// <param name="siteId">The optional site id</param>
@@ -146,7 +150,6 @@ namespace Piranha.Services
         /// <summary>
         /// Gets the draft for the page model with the specified id.
         /// </summary>
-        /// <typeparam name="T">The model type</typeparam>
         /// <param name="id">The unique id</param>
         /// <returns>The draft, or null if no draft exists</returns>
         Task<DynamicPage> GetDraftByIdAsync(Guid id);

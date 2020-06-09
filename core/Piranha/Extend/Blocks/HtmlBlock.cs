@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -17,16 +17,20 @@ namespace Piranha.Extend.Blocks
     /// Single column HTML block.
     /// </summary>
     [BlockType(Name = "Content", Category = "Content", Icon = "fas fa-paragraph", Component = "html-block")]
-    public class HtmlBlock : Block
+    public class HtmlBlock : Block, ISearchable
     {
         /// <summary>
         /// Gets/sets the HTML body.
         /// </summary>
         public HtmlField Body { get; set; }
 
+        /// <summary>
+        /// Gets the title of the block when used in a block group.
+        /// </summary>
+        /// <returns>The title</returns>
         public override string GetTitle()
         {
-            if (Body.Value != null)
+            if (Body?.Value != null)
             {
                 var title = Regex.Replace(Body.Value, @"<[^>]*>", "");
 
@@ -37,6 +41,14 @@ namespace Piranha.Extend.Blocks
                 return title;
             }
             return "Empty";
+        }
+
+        /// <summary>
+        /// Gets the content that should be indexed for searching.
+        /// </summary>
+        public string GetIndexedContent()
+        {
+            return !string.IsNullOrEmpty(Body.Value) ? Body.Value : "";
         }
     }
 }

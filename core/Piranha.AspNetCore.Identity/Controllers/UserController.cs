@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -39,6 +39,7 @@ namespace Piranha.AspNetCore.Identity.Controllers
         /// </summary>
         /// <param name="db">The current db context</param>
         /// <param name="userManager">The current user manager</param>
+        /// <param name="localizer">The manager localizer</param>
         public UserController(IDb db, UserManager<User> userManager, ManagerLocalizer localizer)
         {
             _db = db;
@@ -49,6 +50,7 @@ namespace Piranha.AspNetCore.Identity.Controllers
         /// <summary>
         /// Gets the list view with the currently available users.
         /// </summary>
+        [HttpGet]
         [Route("/manager/users")]
         [Authorize(Policy = Permissions.Users)]
         public IActionResult List()
@@ -59,6 +61,7 @@ namespace Piranha.AspNetCore.Identity.Controllers
         /// <summary>
         /// Gets the list view with the currently available users.
         /// </summary>
+        [HttpGet]
         [Route("/manager/users/list")]
         [Authorize(Policy = Permissions.Users)]
         public UserListModel Get()
@@ -70,6 +73,7 @@ namespace Piranha.AspNetCore.Identity.Controllers
         /// Gets the edit view for an existing user.
         /// </summary>
         /// <param name="id">The user id</param>
+        [HttpGet]
         [Route("/manager/user/{id:Guid?}")]
         [Authorize(Policy = Permissions.UsersEdit)]
         public IActionResult Edit(Guid id)
@@ -82,6 +86,7 @@ namespace Piranha.AspNetCore.Identity.Controllers
         /// Gets the edit view for an existing user.
         /// </summary>
         /// <param name="id">The user id</param>
+        [HttpGet]
         [Route("/manager/user/edit/{id:Guid}")]
         [Authorize(Policy = Permissions.UsersEdit)]
         public UserEditModel Get(Guid id)
@@ -93,6 +98,7 @@ namespace Piranha.AspNetCore.Identity.Controllers
         /// <summary>
         /// Gets the edit view for a new user.
         /// </summary>
+        [HttpGet]
         [Route("/manager/user/add")]
         [Authorize(Policy = Permissions.UsersEdit)]
         public UserEditModel Add()
@@ -119,9 +125,8 @@ namespace Piranha.AspNetCore.Identity.Controllers
                 return BadRequest(GetErrorMessage(_localizer.Security["The user could not be found."]));
             }
 
-            
-
-            try { 
+            try
+            {
                 var userId = model.User.Id;
                 var isNew = userId == Guid.Empty;
 
@@ -144,8 +149,6 @@ namespace Piranha.AspNetCore.Identity.Controllers
                 {
                     return BadRequest(GetErrorMessage(_localizer.Security["Password is mandatory when creating a new user."]));
                 }
-
-                
 
                 if (!string.IsNullOrWhiteSpace(model.Password) && _userManager.PasswordValidators.Count > 0)
                 {
@@ -195,6 +198,7 @@ namespace Piranha.AspNetCore.Identity.Controllers
         /// Deletes the user with the given id.
         /// </summary>
         /// <param name="id">The user id</param>
+        [HttpGet]
         [Route("/manager/user/delete/{id:Guid}")]
         [Authorize(Policy = Permissions.UsersSave)]
         public async Task<IActionResult> Delete(Guid id)
@@ -214,7 +218,6 @@ namespace Piranha.AspNetCore.Identity.Controllers
 
                 return Ok(GetSuccessMessage(_localizer.Security["The user has been deleted."]));
             }
-
 
             return NotFound(GetErrorMessage(_localizer.Security["The user could not be found."]));
         }

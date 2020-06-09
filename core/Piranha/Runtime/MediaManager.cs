@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -59,6 +59,7 @@ namespace Piranha.Runtime
             /// </summary>
             /// <param name="extension">The file extension</param>
             /// <param name="contentType">The content type</param>
+            /// <param name="allowProcessing">If image processing should be allowed</param>
             public void Add(string extension, string contentType, bool? allowProcessing = null)
             {
                 Add(new MediaTypeItem
@@ -104,6 +105,11 @@ namespace Piranha.Runtime
         /// Gets/sets the currently accepted resource extensions.
         /// </summary>
         public MediaTypeList Resources { get; set; } = new MediaTypeList();
+
+        /// <summary>
+        /// Gets/sets the currently registered meta properties for media.
+        /// </summary>
+        public IList<string> MetaProperties { get; set; } = new List<string>();
 
         /// <summary>
         /// Checks if the given filename has a supported extension.

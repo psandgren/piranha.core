@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -29,15 +29,17 @@ namespace Piranha.Manager.Controllers
     public class PostApiController : Controller
     {
         private readonly PostService _service;
+        private readonly IApi _api;
         private readonly ManagerLocalizer _localizer;
         private readonly IHubContext<Hubs.PreviewHub> _hub;
 
         /// <summary>
         /// Default constructor.
         /// </summary>
-        public PostApiController(PostService service, ManagerLocalizer localizer, IHubContext<Hubs.PreviewHub> hub)
+        public PostApiController(PostService service, IApi api, ManagerLocalizer localizer, IHubContext<Hubs.PreviewHub> hub)
         {
             _service = service;
+            _api = api;
             _localizer = localizer;
             _hub = hub;
         }
@@ -68,6 +70,20 @@ namespace Piranha.Manager.Controllers
         }
 
         /// <summary>
+        /// Gets the info model for the post with the
+        /// given id.
+        /// </summary>
+        /// <param name="id">The unique id</param>
+        /// <returns>The post info model</returns>
+        [Route("info/{id}")]
+        [HttpGet]
+        [Authorize(Policy = Permission.Posts)]
+        public async Task<Piranha.Models.PostInfo> GetInfo(Guid id)
+        {
+            return await _api.Posts.GetByIdAsync<Piranha.Models.PostInfo>(id);
+        }
+
+        /// <summary>
         /// Creates a new post of the specified type.
         /// </summary>
         /// <param name="archiveId">The archive id</param>
@@ -80,7 +96,6 @@ namespace Piranha.Manager.Controllers
         {
             return await _service.Create(archiveId, typeId);
         }
-
 
         [Route("modal")]
         [HttpGet]
@@ -216,6 +231,7 @@ namespace Piranha.Manager.Controllers
         /// Saves the given model
         /// </summary>
         /// <param name="model">The model</param>
+        /// <param name="draft">If the page should be saved as a draft</param>
         /// <returns>The result of the operation</returns>
         private async Task<PostEditModel> Save(PostEditModel model, bool draft = false)
         {

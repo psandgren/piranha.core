@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -64,14 +64,7 @@ namespace Piranha.Manager
             /// <summary>
             /// Gets the available actions for media list view.
             /// </summary>
-            public ActionList<ToolbarAction> MediaList { get; private set; } = new ActionList<ToolbarAction>
-            {
-                new ToolbarAction
-                {
-                    InternalId = "AddFolder",
-                    ActionView = "Partial/Actions/_MediaAddFolder"
-                }
-            };
+            public ActionList<ToolbarAction> MediaList { get; private set; } = new ActionList<ToolbarAction>();
 
             /// <summary>
             /// Gets the available actions for the module list view.

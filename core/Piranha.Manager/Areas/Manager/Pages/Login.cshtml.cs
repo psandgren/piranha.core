@@ -20,11 +20,21 @@ namespace Piranha.Manager.Models
     public class LoginModel : PageModel
     {
         private readonly ISecurity _service;
+        private readonly ManagerLocalizer _localizer;
 
-        public LoginModel(ISecurity service)
+        public LoginModel(ISecurity service, ManagerLocalizer localizer)
         {
             _service = service;
+            _localizer = localizer;
         }
+
+        [BindProperty]
+        public InputModel Input { get; set; }
+
+        public string ReturnUrl { get; set; }
+
+        [TempData]
+        public string ErrorMessage { get; set; }
 
         public class InputModel
         {
@@ -32,21 +42,37 @@ namespace Piranha.Manager.Models
             public string Username { get; set; }
 
             [Required]
+            [DataType(DataType.Password)]
             public string Password { get; set; }
         }
 
-        public async Task<IActionResult> OnPostAsync(InputModel model)
+        public void OnGet(string returnUrl = null)
         {
-            if (!ModelState.IsValid)
+            if (!string.IsNullOrEmpty(ErrorMessage))
             {
+                ModelState.AddModelError(string.Empty, ErrorMessage);
+            }
+
+            ReturnUrl = returnUrl;
+        }
+
+        public async Task<IActionResult> OnPostAsync(string returnUrl = null)
+        {
+            await _service.SignOut(HttpContext);
+
+            if (!ModelState.IsValid || !await _service.SignIn(HttpContext, Input.Username, Input.Password))
+            {
+                ModelState.Clear();
+                ModelState.AddModelError(string.Empty, _localizer.General["Username and/or password are incorrect."].Value);
                 return Page();
             }
 
-            if (await _service.SignIn(HttpContext, model.Username, model.Password))
+            if (!string.IsNullOrEmpty(returnUrl))
             {
-                return new RedirectToPageResult("PageList");
+                return LocalRedirect(returnUrl);
             }
-            return Page();
+
+            return new RedirectToPageResult("Index");
         }
     }
 }

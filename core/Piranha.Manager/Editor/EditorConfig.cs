@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -38,6 +38,11 @@ namespace Piranha.Manager.Editor
         /// Gets/sets the configured editor toolbar.
         /// </summary>
         public string Toolbar { get; set; }
+
+        /// <summary>
+        /// Gets/sets the extra valid html elements for the editor.
+        /// </summary>
+        public string ExtendedValidElements { get; set; }
 
         /// <summary>
         /// Gets/sets the configured block formats.

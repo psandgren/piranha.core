@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -29,6 +29,9 @@ public static class IdentityModuleExtensions
     /// Adds the Piranha identity module.
     /// </summary>
     /// <param name="services">The current service collection</param>
+    /// <param name="dbOptions">Options for configuring the database</param>
+    /// <param name="identityOptions">Optional options for identity</param>
+    /// <param name="cookieOptions">Optional options for cookies</param>
     /// <returns>The services</returns>
     public static IServiceCollection AddPiranhaIdentity<T>(this IServiceCollection services,
         Action<DbContextOptionsBuilder> dbOptions,
@@ -115,7 +118,6 @@ public static class IdentityModuleExtensions
         services.ConfigureApplicationCookie(cookieOptions != null ? cookieOptions : SetDefaultCookieOptions);
         services.AddScoped<ISecurity, IdentitySecurity>();
 
-
         return services;
     }
 
@@ -123,6 +125,9 @@ public static class IdentityModuleExtensions
     /// Adds the Piranha identity module.
     /// </summary>
     /// <param name="services">The current service collection</param>
+    /// <param name="dbOptions">Options for configuring the database</param>
+    /// <param name="identityOptions">Optional options for identity</param>
+    /// <param name="cookieOptions">Optional options for cookies</param>
     /// <returns>The services</returns>
     public static IServiceCollection AddPiranhaIdentityWithSeed<T, TSeed>(this IServiceCollection services,
         Action<DbContextOptionsBuilder> dbOptions,
@@ -141,6 +146,9 @@ public static class IdentityModuleExtensions
     /// Adds the Piranha identity module.
     /// </summary>
     /// <param name="services">The current service collection</param>
+    /// <param name="dbOptions">Options for configuring the database</param>
+    /// <param name="identityOptions">Optional options for identity</param>
+    /// <param name="cookieOptions">Optional options for cookies</param>
     /// <returns>The services</returns>
     public static IServiceCollection AddPiranhaIdentityWithSeed<T>(this IServiceCollection services,
         Action<DbContextOptionsBuilder> dbOptions,

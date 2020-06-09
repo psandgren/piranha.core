@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2016-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -14,10 +14,12 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Piranha.Models;
-using Piranha.Services;
 
 namespace Piranha.AttributeBuilder
 {
+    /// <summary>
+    /// Class for building and importing page types.
+    /// </summary>
     public class PageTypeBuilder : ContentTypeBuilder<PageTypeBuilder, PageType>
     {
         private readonly IApi _api;
@@ -116,6 +118,8 @@ namespace Piranha.AttributeBuilder
                         CLRType = type.GetTypeInfo().AssemblyQualifiedName,
                         Title = attr.Title,
                         UseBlocks = attr.UseBlocks,
+                        UsePrimaryImage = attr.UsePrimaryImage,
+                        UseExcerpt = attr.UseExcerpt,
                         IsArchive = typeof(IArchivePage).IsAssignableFrom(type) || attr.IsArchive
                     };
 

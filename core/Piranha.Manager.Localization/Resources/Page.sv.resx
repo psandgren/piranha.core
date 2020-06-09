@@ -18,6 +18,9 @@
   <data name="An error occured while deleting the page" xml:space="preserve">
     <value>Ett fel inträffade när sidan skulle raderas</value>
   </data>
+  <data name="Archive" xml:space="preserve">
+    <value>Arkiv</value>
+  </data>
   <data name="Detach page" xml:space="preserve">
     <value>Koppla loss</value>
   </data>
@@ -74,5 +77,8 @@
   </data>
   <data name="Your page title" xml:space="preserve">
     <value>Din sidtitel</value>
+  </data>
+  <data name="If comments should be enabled for this page" xml:space="preserve">
+    <value>Om kommentarer ska aktiveras för den här sidan</value>
   </data>
 </root>

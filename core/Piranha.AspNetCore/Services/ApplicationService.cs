@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -14,100 +14,12 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using Piranha.Extend.Fields;
 using Piranha.Models;
 
 namespace Piranha.AspNetCore.Services
 {
     public class ApplicationService : IApplicationService
     {
-        public class SiteHelper : ISiteHelper
-        {
-            private readonly IApi _api;
-
-            /// <summary>
-            /// Gets the id of the currently requested site.
-            /// </summary>
-            public Guid Id { get; set; }
-
-            /// <summary>
-            /// Gets/sets the optional culture of the requested site.
-            /// </summary>
-            public string Culture { get; set; }
-
-            /// <summary>
-            /// Gets the sitemap of the currently requested site.
-            /// </summary>
-            public Sitemap Sitemap { get; set; }
-
-            /// <summary>
-            /// Default internal constructur.
-            /// </summary>
-            internal SiteHelper(IApi api)
-            {
-                _api = api;
-            }
-
-            /// <summary>
-            /// Gets the site content for the current site.
-            /// </summary>
-            /// <typeparam name="T">The content type</typeparam>
-            /// <returns>The site content model</returns>
-            public Task<T> GetContentAsync<T>() where T : SiteContent<T>
-            {
-                if (Id != Guid.Empty)
-                {
-                    return _api.Sites.GetContentByIdAsync<T>(Id);
-                }
-                return null;
-            }
-        }
-
-        public class MediaHelper : IMediaHelper
-        {
-            private readonly IApi _api;
-
-            /// <summary>
-            /// Default internal constructur.
-            /// </summary>
-            internal MediaHelper(IApi api)
-            {
-                _api = api;
-            }
-
-            /// <summary>
-            /// Resizes the given image to the given dimensions.
-            /// </summary>
-            /// <param name="image"></param>
-            /// <param name="width"></param>
-            /// <param name="height"></param>
-            /// <returns></returns>
-            public string ResizeImage(ImageField image, int width, int? height = null)
-            {
-                if (image.Id.HasValue)
-                {
-                    return _api.Media.EnsureVersion(image.Id.Value, width, height);
-                }
-                return null;
-            }
-
-            /// <summary>
-            /// Resizes the given image to the given dimensions.
-            /// </summary>
-            /// <param name="image"></param>
-            /// <param name="width"></param>
-            /// <param name="height"></param>
-            /// <returns></returns>
-            public string ResizeImage(Media image, int width, int? height = null)
-            {
-                if (image.Id != Guid.Empty && image.Type == MediaType.Image)
-                {
-                    return _api.Media.EnsureVersion(image.Id, width, height);
-                }
-                return null;
-            }
-        }
-
         /// <summary>
         /// Gets the current api.
         /// </summary>
@@ -184,6 +96,7 @@ namespace Piranha.AspNetCore.Services
                     {
                         context.Request.Path = "/" + string.Join("/", segments.Skip(1));
                         hostname = prefixedHostname;
+
                     }
                 }
 
@@ -201,6 +114,10 @@ namespace Piranha.AspNetCore.Services
                     Site.Id = site.Id;
                     Site.Culture = site.Culture;
                     Site.Sitemap = await Api.Sites.GetSitemapAsync(Site.Id);
+
+                    var siteHost = GetFirstHost(site);
+                    Site.Host = siteHost[0];
+                    Site.SitePrefix = siteHost[1];
                 }
             }
 
@@ -229,6 +146,28 @@ namespace Piranha.AspNetCore.Services
                 return "https://www.gravatar.com/avatar/" + sb.ToString().ToLower() +
                        (size > 0 ? "?s=" + size : "");
             }
+        }
+
+        /// <summary>
+        /// Gets the first hostname of the site.
+        /// </summary>
+        /// <param name="site">The site</param>
+        /// <returns>The hostname split into host and prefix</returns>
+        private string[] GetFirstHost(Site site)
+        {
+            var result = new string[2];
+
+            if (!string.IsNullOrEmpty(site.Hostnames))
+            {
+                foreach (var hostname in site.Hostnames.Split(","))
+                {
+                    var segments = hostname.Split("/", StringSplitOptions.RemoveEmptyEntries);
+
+                    result[0] = segments[0];
+                    result[1] = segments.Length > 1 ? segments[1] : null;
+                }
+            }
+            return result;
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -25,10 +25,5 @@ namespace RazorWeb.Models
         /// </summary>
         [Region]
         public Regions.Hero Hero { get; set; }
-
-        /// <summary>
-        /// View model property for storing the current archive items.
-        /// </summary>
-        public PostArchive<DynamicPost> Archive { get; set; }
     }
 }

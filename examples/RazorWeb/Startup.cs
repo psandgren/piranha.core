@@ -1,11 +1,24 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿/*
+ * Copyright (c) .NET Foundation and Contributors
+ *
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
+ *
+ * http://github.com/tidyui/coreweb
+ *
+ */
+
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 using Piranha;
+using Piranha.Data.EF.SQLite;
 using Piranha.AspNetCore.Identity.SQLite;
 using Piranha.AttributeBuilder;
+using Piranha.Local;
 
 namespace RazorWeb
 {
@@ -22,15 +35,26 @@ namespace RazorWeb
             {
                 options.AddRazorRuntimeCompilation = true;
 
-                options.UseFileStorage();
+                options.UseFileStorage(naming: FileStorageNaming.UniqueFolderNames);
                 options.UseImageSharp();
                 options.UseManager();
                 options.UseTinyMCE();
                 options.UseMemoryCache();
-                options.UseEF(db =>
+                options.UseApi(config =>
+                {
+                    config.AllowAnonymousAccess = true;
+                });
+
+                options.UseEF<SQLiteDb>(db =>
                     db.UseSqlite("Filename=./piranha.razorweb.db"));
                 options.UseIdentityWithSeed<IdentitySQLiteDb>(db =>
                     db.UseSqlite("Filename=./piranha.razorweb.db"));
+            });
+
+            services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo { Title = "PiranhaCMS API", Version = "v1" });
+                options.CustomSchemaIds(x => x.FullName);
             });
         }
 
@@ -40,6 +64,14 @@ namespace RazorWeb
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseSwagger();
+
+                // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
+                // specifying the Swagger JSON endpoint.
+                app.UseSwaggerUI(options =>
+                {
+                    options.SwaggerEndpoint("/swagger/v1/swagger.json", "PiranhaCMS API V1");
+                });
             }
 
             App.Init(api);

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2016-2018 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -14,10 +14,12 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Piranha.Models;
-using Piranha.Services;
 
 namespace Piranha.AttributeBuilder
 {
+    /// <summary>
+    /// Class for building and importing post types.
+    /// </summary>
     public class PostTypeBuilder : ContentTypeBuilder<PostTypeBuilder, PostType>
     {
         private readonly IApi _api;
@@ -115,7 +117,9 @@ namespace Piranha.AttributeBuilder
                         Id = attr.Id,
                         CLRType = type.GetTypeInfo().AssemblyQualifiedName,
                         Title = attr.Title,
-                        UseBlocks = attr.UseBlocks
+                        UseBlocks = attr.UseBlocks,
+                        UsePrimaryImage = attr.UsePrimaryImage,
+                        UseExcerpt = attr.UseExcerpt
                     };
 
                     // Get all post routes

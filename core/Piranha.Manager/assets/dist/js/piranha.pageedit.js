@@ -17,17 +17,29 @@ piranha.pageedit = new Vue({
         slug: null,
         metaKeywords: null,
         metaDescription: null,
+        excerpt: null,
         isHidden: false,
         published: null,
         redirectUrl: null,
         redirectType: null,
         enableComments: null,
         closeCommentsAfterDays: null,
+        commentCount: null,
+        pendingCommentCount: 0,
         state: "new",
         blocks: [],
         regions: [],
         editors: [],
         useBlocks: true,
+        usePrimaryImage: true,
+        useExcerpt: true,
+        useHtmlExcerpt: true,
+        permissions: [],
+        primaryImage: {
+            id: null,
+            media: null
+        },
+        selectedPermissions: [],
         isCopy: false,
         saving: false,
         savingDraft: false,
@@ -51,6 +63,16 @@ piranha.pageedit = new Vue({
                 return item.meta.display === "setting";
             });
         },
+        primaryImageUrl: function () {
+            if (this.primaryImage.media != null) {
+                return piranha.utils.formatUrl(this.primaryImage.media.publicUrl);
+            } else {
+                return piranha.utils.formatUrl("~/manager/assets/img/empty-image.png");
+            }
+        },
+        isExcerptEmpty: function () {
+            return piranha.utils.isEmptyText(this.excerpt);
+        }
     },
     mounted() {
         document.addEventListener("keydown", this.doHotKeys);
@@ -71,20 +93,29 @@ piranha.pageedit = new Vue({
             this.slug = model.slug;
             this.metaKeywords = model.metaKeywords;
             this.metaDescription = model.metaDescription;
+            this.excerpt = model.excerpt;
             this.isHidden = model.isHidden;
             this.published = model.published;
             this.redirectUrl = model.redirectUrl;
             this.redirectType = model.redirectType;
             this.enableComments = model.enableComments;
             this.closeCommentsAfterDays = model.closeCommentsAfterDays;
+            this.commentCount = model.commentCount;
+            this.pendingCommentCount = model.pendingCommentCount;
             this.state = model.state;
             this.blocks = model.blocks;
             this.regions = model.regions;
             this.editors = model.editors;
             this.useBlocks = model.useBlocks;
+            this.usePrimaryImage = model.usePrimaryImage;
+            this.useExcerpt = model.useExcerpt;
+            this.useHtmlExcerpt = model.useHtmlExcerpt;
             this.isCopy = model.isCopy;
             this.selectedRoute = model.selectedRoute;
             this.routes = model.routes;
+            this.permissions = model.permissions;
+            this.primaryImage = model.primaryImage;
+            this.selectedPermissions = model.selectedPermissions;
 
             if (!this.useBlocks) {
                 // First choice, select the first custom editor
@@ -187,6 +218,7 @@ piranha.pageedit = new Vue({
                 slug: self.slug,
                 metaKeywords: self.metaKeywords,
                 metaDescription: self.metaDescription,
+                excerpt: self.excerpt,
                 isHidden: self.isHidden,
                 published: self.published,
                 redirectUrl: self.redirectUrl,
@@ -196,7 +228,11 @@ piranha.pageedit = new Vue({
                 isCopy: self.isCopy,
                 blocks: JSON.parse(JSON.stringify(self.blocks)),
                 regions: JSON.parse(JSON.stringify(self.regions)),
-                selectedRoute: self.selectedRoute
+                selectedRoute: self.selectedRoute,
+                selectedPermissions: self.selectedPermissions,
+                primaryImage: {
+                    id: self.primaryImage.id
+                },
             };
 
             fetch(route, {
@@ -224,6 +260,8 @@ piranha.pageedit = new Vue({
 
                 self.saving = false;
                 self.savingDraft = false;
+
+                self.eventBus.$emit("onSaved", self.state)
             })
             .catch(function (error) {
                 console.log("error:", error);
@@ -330,6 +368,28 @@ piranha.pageedit = new Vue({
             date = date.addDays(this.closeCommentsAfterDays);
 
             return date.toDateString();
+        },
+        selectPrimaryImage: function () {
+            if (this.primaryImage.media !== null) {
+                piranha.mediapicker.open(this.updatePrimaryImage, "Image", this.primaryImage.media.folderId);
+            } else {
+                piranha.mediapicker.openCurrentFolder(this.updatePrimaryImage, "Image");
+            }
+        },
+        removePrimaryImage: function () {
+            this.primaryImage.id = null;
+            this.primaryImage.media = null;
+        },
+        updatePrimaryImage: function (media) {
+            if (media.type === "Image") {
+                this.primaryImage.id = media.id;
+                this.primaryImage.media = media;
+            } else {
+                console.log("No image was selected");
+            }
+        },
+        onExcerptBlur: function (e) {
+            this.excerpt = e.target.innerHTML;
         }
     },
     created: function () {
@@ -337,16 +397,17 @@ piranha.pageedit = new Vue({
     updated: function () {
         if (this.loading)
         {
-            sortable(".blocks", {
+            sortable("#content-blocks", {
                 handle: ".handle",
                 items: ":not(.unsortable)"
             })[0].addEventListener("sortupdate", function (e) {
                 piranha.pageedit.moveBlock(e.detail.origin.index, e.detail.destination.index);
             });
+            piranha.editor.addInline('excerpt-body', 'excerpt-toolbar');
         }
         else {
-            sortable(".blocks", "disable");
-            sortable(".blocks", "enable");
+            sortable("#content-blocks", "disable");
+            sortable("#content-blocks", "enable");
         }
 
         this.loading = false;

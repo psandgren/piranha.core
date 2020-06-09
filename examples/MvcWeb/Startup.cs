@@ -1,10 +1,22 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿/*
+ * Copyright (c) .NET Foundation and Contributors
+ *
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
+ *
+ * http://github.com/tidyui/coreweb
+ *
+ */
+
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Piranha;
+using Piranha.Data.EF.SQLite;
 using Piranha.AspNetCore.Identity.SQLite;
+using Microsoft.OpenApi.Models;
 
 namespace MvcWeb
 {
@@ -29,13 +41,19 @@ namespace MvcWeb
             services.AddPiranhaTinyMCE();
             services.AddPiranhaApi();
 
-            services.AddPiranhaEF(options =>
+            services.AddPiranhaEF<SQLiteDb>(options =>
                 options.UseSqlite("Filename=./piranha.mvcweb.db"));
             services.AddPiranhaIdentityWithSeed<IdentitySQLiteDb>(options =>
                 options.UseSqlite("Filename=./piranha.mvcweb.db"));
 
             services.AddMemoryCache();
             services.AddPiranhaMemoryCache();
+
+            services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo { Title = "PiranhaCMS API", Version = "v1" });
+                options.CustomSchemaIds(x => x.FullName);
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -44,6 +62,14 @@ namespace MvcWeb
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseSwagger();
+
+                // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
+                // specifying the Swagger JSON endpoint.
+                app.UseSwaggerUI(options =>
+                {
+                    options.SwaggerEndpoint("/swagger/v1/swagger.json", "PiranhaCMS API V1");
+                });
             }
 
             App.Init(api);

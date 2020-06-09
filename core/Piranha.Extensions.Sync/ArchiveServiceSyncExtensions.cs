@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -9,8 +9,6 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Piranha.Models;
 
 namespace Piranha.Services
@@ -20,6 +18,7 @@ namespace Piranha.Services
         /// <summary>
         /// Gets the specified post archive for the specified filter.
         /// </summary>
+        /// <param name="service">The archive service</param>
         /// <param name="archiveId">The archive page id</param>
         /// <param name="currentPage">The current page of the archive</param>
         /// <param name="categoryId">The optional category id</param>
@@ -29,6 +28,7 @@ namespace Piranha.Services
         /// <param name="pageSize">The optional page size</param>
         /// <typeparam name="T">The post model type</typeparam>
         /// <returns>The archive model</returns>
+        [Obsolete]
         public static PostArchive<T> GetById<T>(this IArchiveService service, Guid archiveId, int? currentPage = 1, Guid? categoryId = null,
             Guid? tagId = null, int? year = null, int? month = null, int? pageSize = null) where T : PostBase
         {

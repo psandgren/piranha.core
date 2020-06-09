@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -17,15 +17,21 @@ using Piranha.Models;
 namespace Piranha.AspNetCore.Models
 {
     [Obsolete("SinglePageModel<T> has been renamed to SinglePage<T>")]
+    [NoCoverage]
     public class SinglePageModel<T> : SinglePage<T> where T : PageBase
     {
         /// <summary>
         /// Default constructor.
         /// </summary>
         /// <param name="api">The current api</param>
+        /// <param name="loader">The model loader</param>
         public SinglePageModel(IApi api, IModelLoader loader) : base(api, loader) { }
     }
 
+    /// <summary>
+    /// Razor Page model for a single page.
+    /// </summary>
+    /// <typeparam name="T">The page type</typeparam>
     public class SinglePage<T> : Microsoft.AspNetCore.Mvc.RazorPages.PageModel where T : PageBase
     {
         protected readonly IApi _api;
@@ -40,6 +46,7 @@ namespace Piranha.AspNetCore.Models
         /// Default constructor.
         /// </summary>
         /// <param name="api">The current api</param>
+        /// <param name="loader">The model loader</param>
         public SinglePage(IApi api, IModelLoader loader)
         {
             _api = api;
@@ -53,13 +60,20 @@ namespace Piranha.AspNetCore.Models
         /// <param name="draft">If the draft should be fetched</param>
         public virtual async Task<IActionResult> OnGet(Guid id, bool draft = false)
         {
-            Data = await _loader.GetPageAsync<T>(id, HttpContext.User, draft);
-
-            if (Data == null)
+            try
             {
-                return NotFound();
+                Data = await _loader.GetPageAsync<T>(id, HttpContext.User, draft);
+
+                if (Data == null)
+                {
+                    return NotFound();
+                }
+                return Page();
             }
-            return Page();
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized();
+            }
         }
     }
 }

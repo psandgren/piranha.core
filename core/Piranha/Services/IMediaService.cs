@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -67,6 +67,12 @@ namespace Piranha.Services
         Task<MediaStructure> GetStructureAsync();
 
         /// <summary>
+        /// Updates the meta data for the given media model.
+        /// </summary>
+        /// <param name="model">The model</param>
+        Task SaveAsync(Media model);
+
+        /// <summary>
         /// Adds or updates the given model in the database
         /// depending on its state.
         /// </summary>
@@ -83,7 +89,7 @@ namespace Piranha.Services
         /// <summary>
         /// Moves the media to the folder with the specified id.
         /// </summary>
-        /// <param name="media">The media</param>
+        /// <param name="model">The model</param>
         /// <param name="folderId">The folder id</param>
         Task MoveAsync(Media model, Guid? folderId);
 

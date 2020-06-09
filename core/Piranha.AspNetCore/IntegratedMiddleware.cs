@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -29,6 +29,7 @@ namespace Piranha.AspNetCore
         /// Creates a new middleware instance.
         /// </summary>
         /// <param name="next">The next middleware in the pipeline</param>
+        /// <param name="config">The current route configuration</param>
         /// <param name="factory">The logger factory</param>
         public IntegratedMiddleware(RequestDelegate next, PiranhaRouteConfig config, ILoggerFactory factory = null) : base(next, factory)
         {
@@ -40,6 +41,7 @@ namespace Piranha.AspNetCore
         /// </summary>
         /// <param name="context">The current http context</param>
         /// <param name="api">The current api</param>
+        /// <param name="service">The application service</param>
         /// <returns>An async task</returns>
         public override async Task Invoke(HttpContext context, IApi api, IApplicationService service)
         {
@@ -102,12 +104,23 @@ namespace Piranha.AspNetCore
                     service.Site.Culture = site.Culture;
                     service.Site.Sitemap = await api.Sites.GetSitemapAsync(site.Id);
 
+                    // Set prefered hostname & prefix
+                    var siteHost = GetFirstHost(site);
+                    service.Site.Host = siteHost[0];
+                    service.Site.SitePrefix = siteHost[1];
+
                     // Set current culture if specified in site
                     if (!string.IsNullOrEmpty(site.Culture))
                     {
                         var cultureInfo = new CultureInfo(service.Site.Culture);
                         CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = cultureInfo;
                     }
+                }
+                else
+                {
+                    // There's no sites available, let the application finish
+                    await _next.Invoke(context);
+                    return;
                 }
 
                 // Store hostname
@@ -267,7 +280,7 @@ namespace Piranha.AspNetCore
                             query.Append("&startpage=true");
                         }
 
-                        if (!pageType.IsArchive)
+                        if (!pageType.IsArchive || !_config.UseArchiveRouting)
                         {
                             if (HandleCache(context, site, page, appConfig.CacheExpiresPages))
                             {
@@ -442,7 +455,7 @@ namespace Piranha.AspNetCore
         /// <param name="content">The current content</param>
         /// <param name="expires">How many minutes the cache should be valid</param>
         /// <returns>If the client has the latest version</returns>
-        public bool HandleCache(HttpContext context, Site site, RoutedContent content, int expires)
+        public bool HandleCache(HttpContext context, Site site, RoutedContentBase content, int expires)
         {
             var headers = context.Response.GetTypedHeaders();
 
@@ -480,6 +493,30 @@ namespace Piranha.AspNetCore
                 };
             }
             return false;
+        }
+
+        /// <summary>
+        /// Gets the first hostname of the site.
+        /// </summary>
+        /// <param name="site">The site</param>
+        /// <returns>The hostname split into host and prefix</returns>
+        private string[] GetFirstHost(Site site)
+        {
+            var result = new string[2];
+
+            if (!string.IsNullOrEmpty(site.Hostnames))
+            {
+                foreach (var hostname in site.Hostnames.Split(","))
+                {
+                    var segments = hostname.Split("/", StringSplitOptions.RemoveEmptyEntries);
+
+                    result[0] = segments[0];
+                    result[1] = segments.Length > 1 ? segments[1] : null;
+
+                    break;
+                }
+            }
+            return result;
         }
     }
 }

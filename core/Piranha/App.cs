@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2016-2019 Håkan Edling
+ * Copyright (c) .NET Foundation and Contributors
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -187,6 +187,7 @@ namespace Piranha
             Instance._mediaTypes.Audio.Add(".wav", "audio/wav");
 
             // Compose field types
+            Instance._fields.Register<Extend.Fields.AudioField>();
             Instance._fields.Register<Extend.Fields.CheckBoxField>();
             Instance._fields.Register<Extend.Fields.DateField>();
             Instance._fields.Register<Extend.Fields.DocumentField>();
@@ -201,7 +202,9 @@ namespace Piranha
             Instance._fields.Register<Extend.Fields.StringField>();
             Instance._fields.Register<Extend.Fields.TextField>();
             Instance._fields.Register<Extend.Fields.VideoField>();
-            Instance._fields.Register<Extend.Fields.AudioField>();
+
+            // Compose select field types
+            Instance._fields.RegisterSelect<Extend.Blocks.ImageAspect>();
 
             // Compose block types
             Instance._blocks.Register<Extend.Blocks.AudioBlock>();
@@ -210,6 +213,8 @@ namespace Piranha
             Instance._blocks.Register<Extend.Blocks.HtmlColumnBlock>();
             Instance._blocks.Register<Extend.Blocks.ImageBlock>();
             Instance._blocks.Register<Extend.Blocks.ImageGalleryBlock>();
+            Instance._blocks.Register<Extend.Blocks.PageBlock>();
+            Instance._blocks.Register<Extend.Blocks.PostBlock>();
             Instance._blocks.Register<Extend.Blocks.QuoteBlock>();
             Instance._blocks.Register<Extend.Blocks.SeparatorBlock>();
             Instance._blocks.Register<Extend.Blocks.TextBlock>();
@@ -238,12 +243,14 @@ namespace Piranha
             Instance._permissions["Core"].Add(new PermissionItem
             {
                 Name = Permission.PagePreview,
-                Title = "Page Preview"
+                Title = "Page Preview",
+                IsInternal = true
             });
             Instance._permissions["Core"].Add(new PermissionItem
             {
                 Name = Permission.PostPreview,
-                Title = "Post Preview"
+                Title = "Post Preview",
+                IsInternal = true
             });
         }
 
